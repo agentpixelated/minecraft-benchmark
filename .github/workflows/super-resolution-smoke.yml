@@ -10,14 +10,35 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: super-resolution-smoke
   cancel-in-progress: true
 
 jobs:
+  announce:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Record live SR smoke run ID
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          mkdir -p ci
+          printf '{"run_id":%s,"source_sha":"%s","status":"started"}\n' "$RUN_ID" "$SOURCE_SHA" > ci/super-resolution-live.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git pull --rebase
+          git add ci/super-resolution-live.json
+          git commit -m 'Record live Super Resolution smoke run' || true
+          git push
+
   windows-prepare:
+    needs: announce
     runs-on: windows-2025
     timeout-minutes: 30
     steps:
@@ -29,6 +50,7 @@ jobs:
         run: .\run-windows.ps1 --quick --super-resolution --configs sr_native,sr_mod_disabled,sr_fsr1_quality --accept-eula --prepare-only
 
   linux-runtime:
+    needs: announce
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     steps:
