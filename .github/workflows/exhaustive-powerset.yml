@@ -68,7 +68,10 @@ jobs:
           for r in d['raw_runs']:
               assert expected <= set(r.get('scenes',{})), expected-set(r.get('scenes',{}))
               assert r.get('process_metrics',{}).get('peak_rss_mb',0)>0
-          assert len(d['suite_results']['configs']['sodium']['suites'])==8
+          suites=d['suite_results']['configs']['sodium']['suites']
+          assert len(suites)==9, suites.keys()
+          assert suites['super_resolution']['status']=='not_applicable'
+          assert suites['save_quit']['status']=='planned'
           print('GATE OK')
           PY
 
