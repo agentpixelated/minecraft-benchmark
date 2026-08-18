@@ -1,0 +1,82 @@
+name: Super Resolution benchmark smoke
+
+on:
+  push:
+    paths:
+      - '.github/workflows/super-resolution-smoke.yml'
+      - 'benchmark-config.json'
+      - 'mcbench/**'
+      - 'run-agent.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: super-resolution-smoke
+  cancel-in-progress: true
+
+jobs:
+  windows-prepare:
+    runs-on: windows-2025
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare SR benchmark through Windows user launcher
+        shell: pwsh
+        env:
+          MC_EULA_ACCEPTED: '1'
+        run: .\run-windows.ps1 --quick --super-resolution --configs sr_native,sr_mod_disabled,sr_fsr1_quality --accept-eula --prepare-only
+
+  linux-runtime:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install graphics runtime
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb mesa-vulkan-drivers libvulkan1
+      - name: Run native, disabled-overhead, FSR1 and SGSR1 profiles
+        env:
+          MC_EULA_ACCEPTED: '1'
+        run: xvfb-run -a ./run-linux.sh --quick --super-resolution --configs sr_native,sr_mod_disabled,sr_fsr1_quality,sr_sgsr1_quality --accept-eula
+      - name: Verify SR profile proof and result schema
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('results/latest-summary.json'))
+          assert d['matrix']['mode']=='super_resolution', d['matrix']
+          assert d['matrix']['backend']=='opengl'
+          rows=d['raw_runs']
+          assert len(rows)==4, len(rows)
+          by={r['config']:r for r in rows}
+          for cid in ['sr_native','sr_mod_disabled','sr_fsr1_quality','sr_sgsr1_quality']:
+              r=by[cid]
+              assert r.get('backend')=='opengl' and r.get('backend_proven') is True, (cid,r.get('reason'))
+          for cid in ['sr_fsr1_quality','sr_sgsr1_quality']:
+              sr=by[cid].get('super_resolution',{})
+              assert sr.get('proven') is True, (cid,sr,by[cid].get('reason'))
+              assert sr.get('algorithm_initialized') is True, (cid,sr)
+          suites=d['suite_results']['configs']
+          assert suites['sr_native']['suites']['super_resolution']['status']=='measured'
+          assert suites['sr_fsr1_quality']['suites']['super_resolution']['vs_native_pct'] is not None
+          print(json.dumps({
+            'status':'success',
+            'profiles':{cid:{
+              'fps':suites[cid]['suites']['super_resolution']['opengl'],
+              'vs_native_pct':suites[cid]['suites']['super_resolution'].get('vs_native_pct'),
+              'render_scale':suites[cid]['suites']['super_resolution'].get('profile',{}).get('render_scale')
+            } for cid in suites},
+          },indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: super-resolution-smoke-results
+          path: |
+            results/
+            .mcbench/game/logs/
+            .mcbench/game/config/super_resolution/config.toml
+          if-no-files-found: ignore
+          retention-days: 7
