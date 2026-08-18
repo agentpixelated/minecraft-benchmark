@@ -11,6 +11,9 @@ on:
       - 'objectbench/**'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   windows-prepare:
     runs-on: windows-latest
@@ -73,3 +76,28 @@ jobs:
             .mcbench/game/logs/latest.log
           if-no-files-found: ignore
           retention-days: 3
+
+  record:
+    if: always()
+    needs: [windows-prepare, linux-quick-benchmark, ai-agent-quick-benchmark]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Record three-platform integration status
+        env:
+          WINDOWS_RESULT: ${{ needs.windows-prepare.result }}
+          LINUX_RESULT: ${{ needs.linux-quick-benchmark.result }}
+          AGENT_RESULT: ${{ needs.ai-agent-quick-benchmark.result }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          mkdir -p ci
+          printf '{"source_sha":"%s","windows":"%s","linux":"%s","ai_agent":"%s"}\n' "$SOURCE_SHA" "$WINDOWS_RESULT" "$LINUX_RESULT" "$AGENT_RESULT" > ci/integration-smoke.json
+          cat ci/integration-smoke.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git pull --rebase
+          git add ci/integration-smoke.json
+          git commit -m 'Record three-platform integration smoke result' || true
+          git push
