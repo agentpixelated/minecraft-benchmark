@@ -20,7 +20,8 @@
     "c2me-fabric": "C2ME",
     "badoptimizations": "BadOptimizations",
     "better-block-entities": "Better Block Entities",
-    "superresolution": "Super Resolution"
+    "superresolution": "Super Resolution",
+    "renderscale": "RenderScale"
   },
   "suites": {
     "renderer_fps": {
@@ -71,7 +72,7 @@
       "kind": "special_super_resolution",
       "scenes": ["geometry_transparency", "occlusion_entities", "mixed_block_entities"],
       "primary_metric": "mean_fps",
-      "note": "Dedicated OpenGL-only cross-product of internal render scale and upscaling algorithm. Minecraft 26.2 Super Resolution builds disable their upscaling features on the native Vulkan backend."
+      "note": "Dedicated OpenGL-only matrix with native, raw RenderScale controls, and Super Resolution algorithms at matched internal render scales. RenderScale and Super Resolution are not stacked in the same profile."
     },
     "save_quit": {
       "label": "Save / Quit",
@@ -82,6 +83,7 @@
   },
   "super_resolution_benchmark": {
     "mod": "superresolution",
+    "render_scale_mod": "renderscale",
     "backend": "opengl",
     "sharpness": 0.55,
     "render_scales": [1.0, 0.75, 0.6666666667, 0.5882352941, 0.5],
