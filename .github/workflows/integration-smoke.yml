@@ -1,0 +1,46 @@
+name: Integration smoke test
+
+on:
+  push:
+    paths:
+      - '.github/workflows/integration-smoke.yml'
+  workflow_dispatch:
+
+jobs:
+  windows-prepare:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install benchmark dependencies
+        run: python -m pip install portablemc==4.4.1 psutil
+      - name: Full Windows preparation smoke test
+        run: python benchmark.py --prepare-only --configs sodium --accept-eula
+
+  linux-quick-benchmark:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install graphics runtime
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb mesa-vulkan-drivers libvulkan1
+          python -m pip install portablemc==4.4.1 psutil
+      - name: Run one-stack OpenGL and Vulkan benchmark
+        run: xvfb-run -a python benchmark.py --quick --configs sodium --accept-eula
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: linux-integration-smoke-results
+          path: |
+            results/
+            .mcbench/game/logs/latest.log
+          if-no-files-found: ignore
+          retention-days: 3
