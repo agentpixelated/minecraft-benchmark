@@ -28,6 +28,8 @@
     {"id": "sodium_moreculling", "label": "Sodium + MoreCulling", "mods": ["moreculling"]},
     {"id": "sodium_lithium", "label": "Sodium + Lithium", "mods": ["lithium"]},
     {"id": "sodium_ferritecore", "label": "Sodium + FerriteCore", "mods": ["ferrite-core"]},
+    {"id": "sodium_badoptimizations", "label": "Sodium + BadOptimizations", "mods": ["badoptimizations"]},
+    {"id": "sodium_bbe", "label": "Sodium + Better Block Entities", "mods": ["better-block-entities"]},
     {"id": "sodium_c2me", "label": "Sodium + C2ME", "mods": ["c2me-fabric"], "note": "Steady-state FPS only; use a separate chunk benchmark to judge C2ME."},
     {"id": "sodium_if_mc", "label": "Sodium + ImmediatelyFast + MoreCulling", "mods": ["immediatelyfast", "moreculling"]},
     {"id": "sodium_if_lithium", "label": "Sodium + ImmediatelyFast + Lithium", "mods": ["immediatelyfast", "lithium"]},
