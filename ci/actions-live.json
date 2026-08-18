@@ -1,0 +1,43 @@
+{
+  "multisuite-validation.yml": [
+    {
+      "conclusion": "failure",
+      "createdAt": "2026-08-18T15:32:02Z",
+      "databaseId": 32155027573,
+      "headSha": "2cd16bb9ab164cab40e0b0f7bfc8218164bebc97",
+      "status": "completed"
+    }
+  ],
+  "exhaustive-powerset.yml": [
+    {
+      "conclusion": "failure",
+      "createdAt": "2026-08-18T15:34:22Z",
+      "databaseId": 32155264773,
+      "headSha": "ca291ad8c679885f4ca79f6baa7553a7acbcdee9",
+      "status": "completed"
+    }
+  ],
+  "integration-smoke.yml": [
+    {
+      "conclusion": "",
+      "createdAt": "2026-08-18T15:30:11Z",
+      "databaseId": 32154837742,
+      "headSha": "979b3d0d6f7f4b4de42afecb0fd0eac80b143f51",
+      "status": "in_progress"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-08-18T15:29:33Z",
+      "databaseId": 32154770062,
+      "headSha": "fa549bb5ee96db5365d7da6760e71d5617097c09",
+      "status": "completed"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-08-18T15:29:07Z",
+      "databaseId": 32154725700,
+      "headSha": "27a0756253cce9d6ff9a0e9827658c2d615081b4",
+      "status": "completed"
+    }
+  ]
+}
