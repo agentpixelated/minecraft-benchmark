@@ -74,7 +74,7 @@ def latest_summary_after(start: float) -> Path | None:
 
 def summarize_result(summary_path: Path) -> dict:
     summary=json.loads(summary_path.read_text(encoding="utf-8")); raw=summary.get("raw_runs",[])
-    valid=[r for r in raw if r.get("backend_proven") is True]
+    valid=[r for r in raw if r.get("backend_proven") is True and r.get("status")!="invalid"]
     invalid=[r for r in raw if r.get("status")=="invalid" or r.get("backend_proven") is not True]
     return {"summary":str(summary_path.relative_to(ROOT)),"report":str((summary_path.parent/"REPORT.md").relative_to(ROOT)),
             "valid_runs":len(valid),"invalid_runs":len(invalid),
@@ -87,19 +87,22 @@ def self_test(out: Path) -> int:
     try:
         cfg=json.loads((ROOT/"benchmark-config.json").read_text(encoding="utf-8")); ids={c["id"] for c in cfg["configs"]}
         assert {"sodium","sodium_full"}.issubset(ids)
-        assert len(cfg.get("suites",{}))==8 and len(cfg.get("optional_mods",[]))==8
+        assert len(cfg.get("suites",{}))==9 and len(cfg.get("optional_mods",[]))==8
+        assert "super_resolution" in cfg["suites"] and len(cfg.get("super_resolution_benchmark",{}).get("profiles",[]))>=3
         assert (ROOT/"run-linux.sh").exists() and (ROOT/"run-windows.ps1").exists()
         compile((ROOT/"run-agent.py").read_text(encoding="utf-8"),"run-agent.py","exec")
-        payload.update({"status":"self-test-ok","configs":len(cfg["configs"]),"suites":len(cfg["suites"]),"exhaustive_combinations":2**len(cfg["optional_mods"])})
+        payload.update({"status":"self-test-ok","configs":len(cfg["configs"]),"suites":len(cfg["suites"]),"exhaustive_combinations":2**len(cfg["optional_mods"]),
+                        "super_resolution_profiles":1+len(cfg["super_resolution_benchmark"]["profiles"])})
         write_json(out,payload); print("AGENT SELF-TEST OK"); return 0
     except Exception as exc:
         payload.update({"status":"self-test-failed","error":repr(exc)}); write_json(out,payload); print("AGENT SELF-TEST FAILED:",exc,file=sys.stderr); return 1
 
 
 def main() -> int:
-    ap=argparse.ArgumentParser(description="AI-agent/headless entrypoint for MCBench multi-suite OpenGL/Vulkan benchmark")
+    ap=argparse.ArgumentParser(description="AI-agent/headless entrypoint for MCBench multi-suite OpenGL/Vulkan and Super Resolution benchmarks")
     ap.add_argument("--quick",action="store_true"); ap.add_argument("--configs"); ap.add_argument("--backend",choices=["both","opengl","vulkan"],default="both")
-    ap.add_argument("--all-combinations",action="store_true"); ap.add_argument("--shard-index",type=int,default=0); ap.add_argument("--shard-count",type=int,default=1)
+    ap.add_argument("--all-combinations",action="store_true"); ap.add_argument("--super-resolution",action="store_true")
+    ap.add_argument("--shard-index",type=int,default=0); ap.add_argument("--shard-count",type=int,default=1)
     ap.add_argument("--accept-eula",action="store_true"); ap.add_argument("--rebuild",action="store_true"); ap.add_argument("--prepare-only",action="store_true"); ap.add_argument("--self-test",action="store_true")
     ap.add_argument("--no-auto-system-deps",action="store_true"); ap.add_argument("--json-out",default=str(DEFAULT_RESULT)); args=ap.parse_args(); out=Path(args.json_out).resolve()
     if args.self_test: return self_test(out)
@@ -113,6 +116,7 @@ def main() -> int:
     if args.configs: bench_args += ["--configs",args.configs]
     if args.backend!="both": bench_args += ["--backend",args.backend]
     if args.all_combinations: bench_args.append("--all-combinations")
+    if args.super_resolution: bench_args.append("--super-resolution")
     if args.shard_count!=1 or args.shard_index!=0: bench_args += ["--shard-index",str(args.shard_index),"--shard-count",str(args.shard_count)]
     if args.accept_eula or os.environ.get("MC_EULA_ACCEPTED") in {"1","true","TRUE","yes","YES"}: bench_args.append("--accept-eula")
     if args.rebuild: bench_args.append("--rebuild")
