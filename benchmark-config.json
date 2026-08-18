@@ -84,13 +84,7 @@
     "mod": "superresolution",
     "backend": "opengl",
     "sharpness": 0.55,
-    "render_scales": [
-      1.0,
-      0.75,
-      0.6666666667,
-      0.5882352941,
-      0.5
-    ],
+    "render_scales": [1.0, 0.75, 0.6666666667, 0.5882352941, 0.5],
     "algorithms": [
       {"id": "fsr1", "label": "FSR 1", "algorithm": "fsr1"},
       {"id": "sgsr1", "label": "SGSR 1", "algorithm": "sgsr1"},
@@ -100,6 +94,11 @@
       {"id": "fsr_v3", "label": "FidelityFX FSR 3.1.4", "algorithm": "fsr", "fsr_version": "V3", "hardware_optional": true},
       {"id": "xess", "label": "XeSS", "algorithm": "xess", "hardware_optional": true},
       {"id": "dlss", "label": "DLSS", "algorithm": "dlss", "hardware_optional": true}
+    ],
+    "profiles": [
+      {"id": "sr_fsr1_quality", "legacy_alias": true},
+      {"id": "sr_sgsr1_quality", "legacy_alias": true},
+      {"id": "sr_fsr1_performance", "legacy_alias": true}
     ]
   },
   "window": {"width": 960, "height": 540},
