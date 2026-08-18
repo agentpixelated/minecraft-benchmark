@@ -20,8 +20,17 @@ MOD_CACHE = CACHE / "mods"
 BUILD_CACHE = CACHE / "objectbench"
 WORLD_TEMPLATE = CACHE / "world-template"
 RESULTS = ROOT / "results"
-USER_AGENT = "agentpixelated/minecraft-benchmark/1.1"
-SCENES = ["overall", "geometry_transparency", "occlusion_entities", "mixed_block_entities"]
+USER_AGENT = "agentpixelated/minecraft-benchmark/1.2"
+SCENES = [
+    "overall",
+    "geometry_transparency",
+    "occlusion_entities",
+    "mixed_block_entities",
+    "particle_stress",
+    "lighting_updates",
+    "network_updates",
+    "chunk_generation",
+]
 
 
 def log(msg: str) -> None:
@@ -32,8 +41,6 @@ def request_headers(url: str) -> dict[str, str]:
     headers = {"User-Agent": USER_AGENT}
     token = os.environ.get("MODRINTH_TOKEN", "").strip()
     host = (urllib.parse.urlparse(url).hostname or "").lower()
-    # Never leak credentials to download/CDN or unrelated hosts. Authentication is
-    # attached only to Modrinth's API host and the token itself is never logged.
     if token and host == "api.modrinth.com":
         headers["Authorization"] = token
     return headers
