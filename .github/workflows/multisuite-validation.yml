@@ -23,10 +23,10 @@ jobs:
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
-      - name: Static self-tests
+      - name: Static self-tests through the real launcher
         run: |
           python3 -m compileall -q benchmark.py run-agent.py mcbench tools
-          python3 benchmark.py --self-test
+          ./run-linux.sh --self-test
           python3 run-agent.py --self-test --json-out agent-self-test.json
           cat agent-self-test.json
       - name: Install graphics runtime
