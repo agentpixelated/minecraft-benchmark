@@ -1,62 +1,208 @@
 <!doctype html>
 <html lang="en" data-theme="dark">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark light">
-<title>MCBench Result Explorer</title>
-<meta name="description" content="Local-first Minecraft benchmark result explorer for MCBench JSON files.">
-<style>
-:root{--bg:#f5f6f8;--side:#eef0f3;--panel:#fff;--panel2:#f8f9fb;--text:#12151a;--muted:#6c7480;--border:#dfe3e8;--accent:#8064ff;--accent2:#a48fff;--gl:#27b889;--vk:#8772ef;--bad:#e85d6c;--good:#2fbd8d;--grid:rgba(18,21,26,.08)}
-html[data-theme=dark]{--bg:#090b0e;--side:#0d1014;--panel:#101419;--panel2:#0c1014;--text:#edf1f5;--muted:#8d98a5;--border:#222831;--accent:#9b84ff;--accent2:#b9aaff;--gl:#42cda2;--vk:#9a88ef;--bad:#ff7180;--good:#48d2a7;--grid:rgba(237,241,245,.075)}
-*{box-sizing:border-box}html,body{margin:0;min-width:320px;min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,select{font:inherit}button{color:inherit}.top{height:60px;position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 20px;border-bottom:1px solid var(--border);background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(14px)}
-.brand{display:flex;align-items:center;gap:10px}.mark{width:25px;height:25px;padding:5px;border:1px solid var(--border);border-radius:7px;display:flex;align-items:end;gap:2px}.mark i{width:4px;background:var(--accent);border-radius:1px}.mark i:nth-child(1){height:8px;opacity:.55}.mark i:nth-child(2){height:14px}.mark i:nth-child(3){height:11px;opacity:.75}.brand strong{display:block;font-size:13px;line-height:1.1;letter-spacing:-.02em}.brand small{display:block;margin-top:3px;color:var(--muted);font-size:10px}.top-actions{display:flex;align-items:center;gap:7px}.badge{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 9px;border:1px solid var(--border);border-radius:7px;background:var(--panel2);color:var(--muted);font-size:11px}.dot{width:7px;height:7px;border-radius:50%;background:var(--good)}.iconbtn{width:32px;height:32px;border:1px solid var(--border);border-radius:7px;background:var(--panel2);cursor:pointer}.iconbtn:hover,.btn:hover{border-color:color-mix(in srgb,var(--accent) 55%,var(--border))}
-.shell{display:grid;grid-template-columns:258px minmax(0,1fr);min-height:calc(100vh - 60px)}aside{min-width:0;padding:18px 16px;border-right:1px solid var(--border);background:var(--side)}.side-head{display:flex;align-items:end;justify-content:space-between;margin-bottom:12px}.eyebrow{font-size:9px;text-transform:uppercase;letter-spacing:.13em;color:var(--muted);font-weight:700}.side-head h1{margin:4px 0 0;font-size:15px;letter-spacing:-.02em}.count{min-width:24px;height:22px;display:grid;place-items:center;padding:0 6px;border:1px solid var(--border);border-radius:6px;background:var(--panel);font-size:10px;color:var(--muted)}
-.drop{min-height:128px;border:1px dashed color-mix(in srgb,var(--border) 70%,var(--muted));border-radius:10px;background:color-mix(in srgb,var(--panel) 44%,transparent);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:14px;cursor:pointer;transition:.15s}.drop:hover,.drop.over{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--panel))}.drop svg{width:22px;height:22px;margin-bottom:9px;stroke:var(--muted);fill:none}.drop strong{font-size:11px}.drop span{margin-top:4px;color:var(--muted);font-size:10px}.drop input{position:absolute;width:1px;height:1px;opacity:0}.btn{height:34px;padding:0 10px;border:1px solid var(--border);border-radius:7px;background:var(--panel);cursor:pointer;font-size:11px;font-weight:600}.btn.primary{background:var(--accent);border-color:var(--accent);color:white}.btn.full{width:100%;margin-top:8px}.runs{margin-top:15px;display:grid;gap:5px}.run{position:relative;width:100%;display:grid;grid-template-columns:7px minmax(0,1fr) 24px;align-items:center;gap:8px;padding:8px;border:1px solid transparent;border-radius:8px;background:transparent;text-align:left;cursor:pointer}.run:hover{background:color-mix(in srgb,var(--panel) 55%,transparent)}.run.active{border-color:var(--border);background:var(--panel)}.run>.rdot{width:6px;height:6px;border-radius:2px;background:var(--muted)}.run.active>.rdot{background:var(--accent)}.rcopy{min-width:0}.rcopy b,.rcopy small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rcopy b{font-size:10.5px}.rcopy small{margin-top:3px;color:var(--muted);font-size:9.5px}.remove{border:0;background:transparent;color:var(--muted);width:23px;height:23px;border-radius:5px;cursor:pointer}.remove:hover{background:var(--panel2);color:var(--bad)}.local-note{margin-top:18px;padding-top:14px;border-top:1px solid var(--border);font-size:9.5px;line-height:1.55;color:var(--muted)}
-main{min-width:0;padding:23px clamp(16px,3vw,34px) 42px}.empty{min-height:calc(100vh - 120px);display:flex;align-items:center;justify-content:center;text-align:center}.empty-inner{width:min(700px,100%)}.ghost{width:min(430px,90%);height:130px;margin:0 auto 23px;position:relative;border-bottom:1px solid var(--border);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:42px 32px;mask-image:linear-gradient(to bottom,transparent,#000 22%,#000 78%,transparent)}.gbars{position:absolute;inset:23px 30px 0;display:grid;grid-template-columns:repeat(7,1fr);align-items:end;gap:10px}.gbars i{height:var(--h);background:color-mix(in srgb,var(--accent) 60%,transparent);border:1px solid color-mix(in srgb,var(--accent) 70%,transparent);border-radius:4px 4px 0 0}.empty h2{margin:0;font-size:clamp(25px,4vw,38px);letter-spacing:-.045em}.empty p{max-width:570px;margin:12px auto 0;color:var(--muted);font-size:12px;line-height:1.65}.empty-actions{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:20px}.chips{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;margin-top:22px}.chips span{padding:5px 7px;border:1px solid var(--border);border-radius:6px;background:var(--panel2);color:var(--muted);font:9.5px ui-monospace,SFMono-Regular,Menlo,monospace}
-.dashboard{max-width:1340px;margin:auto}.dhead{display:flex;justify-content:space-between;align-items:start;gap:18px}.dhead h2{margin:5px 0 0;font-size:23px;letter-spacing:-.035em}.subtitle{margin-top:6px;color:var(--muted);font-size:11px}.seg{display:flex;padding:3px;border:1px solid var(--border);border-radius:8px;background:var(--panel2)}.seg button{height:28px;padding:0 10px;border:0;border-radius:5px;background:transparent;color:var(--muted);cursor:pointer;font-size:10px;font-weight:600}.seg button.active{background:var(--panel);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.08)}.seg button:disabled{opacity:.35;cursor:not-allowed}.toolbar{display:grid;grid-template-columns:repeat(4,minmax(130px,1fr)) auto;gap:8px;margin-top:19px;padding:10px;border:1px solid var(--border);background:var(--panel);border-radius:10px}.field label{display:block;margin-bottom:5px;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.07em}.field select{width:100%;height:34px;padding:0 30px 0 9px;border:1px solid var(--border);border-radius:7px;background:var(--panel2);color:var(--text);font-size:10.5px}.export-wrap{display:flex;align-items:end}.export-wrap .btn{white-space:nowrap}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}.kpi{min-width:0;padding:12px 13px;border:1px solid var(--border);border-radius:9px;background:var(--panel)}.kpi span{display:block;color:var(--muted);font-size:9.5px}.kpi strong{display:block;margin-top:9px;font-size:20px;letter-spacing:-.035em}.kpi small{display:block;margin-top:5px;color:var(--muted);font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.grid2{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(330px,.6fr);gap:10px;margin-top:10px}.panel{min-width:0;border:1px solid var(--border);border-radius:10px;background:var(--panel);overflow:hidden}.ph{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:start;justify-content:space-between;gap:14px}.ph h3{margin:4px 0 0;font-size:13px;letter-spacing:-.02em}.legend{display:flex;gap:10px;color:var(--muted);font-size:9.5px}.legend i{display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:4px}.legend .gl{background:var(--gl)}.legend .vk{background:var(--vk)}.chart{padding:14px;min-height:260px}.bar-row{display:grid;grid-template-columns:minmax(100px,180px) 1fr;align-items:center;gap:10px;margin:8px 0}.bar-label{min-width:0}.bar-label b{display:block;font-size:9.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bar-label small{display:block;margin-top:2px;color:var(--muted);font-size:8.5px}.bars{position:relative;display:grid;gap:3px;padding-right:42px}.track{height:10px;background:color-mix(in srgb,var(--border) 38%,transparent);border-radius:3px;overflow:visible;position:relative}.fill{height:100%;border-radius:3px;min-width:1px}.fill.gl{background:var(--gl)}.fill.vk{background:var(--vk)}.val{position:absolute;left:calc(100% + 6px);top:-1px;color:var(--muted);font-size:8.5px;white-space:nowrap}.delta-chart{padding:14px}.drow{display:grid;grid-template-columns:minmax(100px,155px) 1fr 47px;align-items:center;gap:7px;margin:9px 0}.dname{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:9px}.dtrack{height:10px;position:relative;background:linear-gradient(90deg,transparent calc(50% - .5px),var(--border) calc(50% - .5px),var(--border) calc(50% + .5px),transparent calc(50% + .5px))}.db{position:absolute;top:1px;height:8px;border-radius:2px}.db.pos{left:50%;background:var(--good)}.db.neg{right:50%;background:var(--bad)}.dval{text-align:right;font-size:9px;font-variant-numeric:tabular-nums}.dval.pos{color:var(--good)}.dval.neg{color:var(--bad)}.context{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0}.context div{padding:10px 12px;border-bottom:1px solid var(--border)}.context div:nth-last-child(-n+2){border-bottom:0}.context dt{color:var(--muted);font-size:8.5px;text-transform:uppercase;letter-spacing:.06em}.context dd{margin:4px 0 0;font-size:10px;line-height:1.35;word-break:break-word}.valid{padding:3px 6px;border:1px solid color-mix(in srgb,var(--good) 40%,var(--border));border-radius:5px;color:var(--good);font-size:9px}.valid.bad{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 40%,var(--border))}.table-panel{margin-top:10px}.table-wrap{overflow:auto}.table{width:100%;border-collapse:collapse;min-width:860px}.table th,.table td{padding:9px 11px;border-bottom:1px solid var(--border);text-align:right;font-size:9.5px;font-variant-numeric:tabular-nums}.table th{position:sticky;top:0;background:var(--panel2);color:var(--muted);font-size:8.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}.table th:first-child,.table td:first-child{text-align:left}.table tbody tr:hover{background:var(--panel2)}.table b{display:block;font-size:9.5px}.table small{display:block;margin-top:2px;color:var(--muted);font-size:8.5px}.pos{color:var(--good)}.neg{color:var(--bad)}.muted{color:var(--muted)}.diag{margin-top:10px}.diag-list{padding:0 13px}.diag-row{display:grid;grid-template-columns:1fr 1fr 2fr;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:9.5px}.diag-row:last-child{border:0}.diag-row span{color:var(--muted)}.toast{position:fixed;right:16px;bottom:16px;z-index:50;max-width:min(410px,calc(100vw - 32px));padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--panel);font-size:10.5px;box-shadow:0 8px 30px rgba(0,0,0,.18);transform:translateY(12px);opacity:0;pointer-events:none;transition:.18s}.toast.show{transform:none;opacity:1}.toast.err{border-color:color-mix(in srgb,var(--bad) 45%,var(--border));color:var(--bad)}
-@media(max-width:960px){.shell{grid-template-columns:1fr}aside{border-right:0;border-bottom:1px solid var(--border);padding:12px 14px}.side-head,.local-note{display:none}.drop{min-height:62px;flex-direction:row;gap:8px}.drop svg{margin:0;width:18px}.drop span{margin:0}.runs{display:flex;overflow:auto;margin-top:9px;padding-bottom:2px}.run{min-width:190px}.grid2{grid-template-columns:1fr}.toolbar{grid-template-columns:repeat(2,1fr)}.export-wrap{align-items:end}.kpis{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:580px){.top{padding:0 12px}.privacy-text,.brand small{display:none}.top .badge{padding:0 7px}.main{padding:16px 12px}.dhead{flex-direction:column}.toolbar{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}.kpi strong{font-size:17px}.bar-row{grid-template-columns:95px 1fr}.drow{grid-template-columns:85px 1fr 43px}.context{grid-template-columns:1fr}.context div:nth-last-child(-n+2){border-bottom:1px solid var(--border)}.context div:last-child{border-bottom:0}.diag-row{grid-template-columns:1fr}.empty h2{font-size:28px}}
-@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="description" content="Local-first Minecraft benchmark result explorer for MCBench JSON files." />
+  <title>MCBench Result Explorer</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script defer src="./app.js"></script>
 </head>
 <body>
-<header class="top"><div class="brand"><div class="mark" aria-hidden="true"><i></i><i></i><i></i></div><span><strong>MCBench Result Explorer</strong><small>Renderer benchmark analysis</small></span></div><div class="top-actions"><span class="badge"><i class="dot"></i><span class="privacy-text">Local only · files never uploaded</span></span><button id="theme" class="iconbtn" title="Toggle theme" aria-label="Toggle light and dark theme">◐</button></div></header>
-<div class="shell"><aside><div class="side-head"><div><span class="eyebrow">Workspace</span><h1>Benchmark results</h1></div><span id="count" class="count">0</span></div><label id="drop" class="drop" tabindex="0"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L8 8m4-4 4 4M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg><strong>Drop result JSON</strong><span>summary.json · agent-result.json · multiple files</span><input id="files" type="file" accept="application/json,.json" multiple></label><button id="demoSide" class="btn full">Load verified demo</button><div id="runs" class="runs"></div><p class="local-note">Result contents are parsed with the browser File API. No benchmark data is sent to a server, API, database, or analytics endpoint.</p></aside>
-<main><section id="empty" class="empty"><div class="empty-inner"><div class="ghost" aria-hidden="true"><div class="gbars"><i style="--h:38%"></i><i style="--h:64%"></i><i style="--h:48%"></i><i style="--h:81%"></i><i style="--h:58%"></i><i style="--h:92%"></i><i style="--h:70%"></i></div></div><span class="eyebrow">ObjectBench analysis</span><h2>Turn benchmark JSON into comparable evidence.</h2><p>Load Windows, Linux, and AI-agent results together. Compare OpenGL vs Vulkan, inspect 1% lows and P99 frametime, then export the current view as CSV.</p><div class="empty-actions"><button id="uploadEmpty" class="btn primary">Choose result files</button><button id="demoEmpty" class="btn">Load verified demo</button></div><div class="chips"><span>Mean FPS</span><span>Median FPS</span><span>1% low</span><span>0.1% low</span><span>P99 ms</span><span>Backend delta</span></div></div></section>
-<section id="dash" class="dashboard" hidden><div class="dhead"><div><span id="viewLabel" class="eyebrow">Run view</span><h2 id="title">Benchmark result</h2><div id="subtitle" class="subtitle"></div></div><div class="seg" role="group" aria-label="Comparison mode"><button data-view="run" class="active">Run</button><button data-view="cross">Cross-machine</button></div></div>
-<div class="toolbar"><div id="configField" class="field" hidden><label for="config">Configuration</label><select id="config"></select></div><div class="field"><label for="scene">Scene</label><select id="scene"></select></div><div class="field"><label for="metric">Metric</label><select id="metric"><option value="mean_fps">Mean FPS</option><option value="median_fps">Median FPS</option><option value="one_percent_low_fps">1% low FPS</option><option value="zero_point_one_percent_low_fps">0.1% low FPS</option><option value="p99_frame_ms">P99 frametime</option></select></div><div class="field"><label for="sort">Sort</label><select id="sort"><option value="best">Best first</option><option value="name">Name</option><option value="delta">Backend delta</option></select></div><div class="export-wrap"><button id="export" class="btn">Export CSV</button></div></div>
-<div id="kpis" class="kpis"></div>
-<div class="grid2"><section class="panel"><header class="ph"><div><span id="chartKick" class="eyebrow">Overall · Mean FPS</span><h3 id="chartTitle">OpenGL vs Vulkan</h3></div><div class="legend"><span><i class="gl"></i>OpenGL</span><span><i class="vk"></i>Vulkan</span></div></header><div id="primary" class="chart"></div></section><section class="panel"><header class="ph"><div><span class="eyebrow">Backend delta</span><h3>Vulkan vs OpenGL</h3></div><span class="muted" style="font-size:9px">0% = parity</span></header><div id="delta" class="delta-chart"></div></section></div>
-<section class="panel" style="margin-top:10px"><header class="ph"><div><span class="eyebrow">Environment</span><h3>Active result context</h3></div><span id="valid" class="valid">valid</span></header><dl id="context" class="context"></dl></section>
-<section class="panel table-panel"><header class="ph"><div><span class="eyebrow">Exact values</span><h3 id="tableTitle">Configuration comparison</h3></div></header><div class="table-wrap"><table class="table"><thead id="thead"></thead><tbody id="tbody"></tbody></table></div></section>
-<section id="diag" class="panel diag" hidden><header class="ph"><div><span class="eyebrow">Diagnostics</span><h3>Invalid or partial runs</h3></div><span id="diagCount" class="valid bad"></span></header><div id="diagList" class="diag-list"></div></section></section></main></div><div id="toast" class="toast" aria-live="polite"></div>
-<script>
-(()=>{'use strict';
-const S={sets:[],active:null,view:'run',scene:'overall',metric:'mean_fps',config:null,sort:'best'};
-const MM={mean_fps:['Mean FPS','FPS',1],median_fps:['Median FPS','FPS',1],one_percent_low_fps:['1% low','FPS',1],zero_point_one_percent_low_fps:['0.1% low','FPS',1],p99_frame_ms:['P99 frametime','ms',0]};
-const SL={overall:'Overall',geometry_transparency:'Geometry + transparency',occlusion_entities:'Occlusion + entities',mixed_block_entities:'Mixed block entities'};
-const q=s=>document.querySelector(s),qa=s=>[...document.querySelectorAll(s)];
-const E={files:q('#files'),drop:q('#drop'),runs:q('#runs'),count:q('#count'),empty:q('#empty'),dash:q('#dash'),theme:q('#theme'),scene:q('#scene'),metric:q('#metric'),sort:q('#sort'),config:q('#config'),configField:q('#configField'),kpis:q('#kpis'),primary:q('#primary'),delta:q('#delta'),context:q('#context'),valid:q('#valid'),thead:q('#thead'),tbody:q('#tbody'),tableTitle:q('#tableTitle'),diag:q('#diag'),diagList:q('#diagList'),diagCount:q('#diagCount'),title:q('#title'),subtitle:q('#subtitle'),viewLabel:q('#viewLabel'),chartKick:q('#chartKick'),chartTitle:q('#chartTitle'),toast:q('#toast')};
-const n=v=>{const x=Number(v);return Number.isFinite(x)?x:null},f=(v,d=2)=>n(v)==null?'—':n(v).toFixed(d),pct=v=>n(v)==null?'—':`${n(v)>=0?'+':''}${n(v).toFixed(2)}%`,esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
-function sys(d,h={}){if(h.system)return h.system;let p=String(d.platform||h.platform||'').toLowerCase();return p.includes('windows')?'Windows':p.includes('linux')?'Linux':p.includes('darwin')||p.includes('mac')?'macOS':'Unknown OS'}
-function norm(name,d,demo=false){if(!d||typeof d!=='object')throw Error('JSON root must be an object.');let a=d.aggregate?.configs?d.aggregate:d.result?.aggregate?.configs?d.result.aggregate:d.configs?{configs:d.configs,invalid_runs:d.invalid_runs||[]}:null;if(!a?.configs||!Object.keys(a.configs).length)throw Error('No aggregate.configs found. Use MCBench summary.json or agent-result.json.');let h=d.hardware||d.result?.hardware||{},sc=new Set(['overall']),valid=0;for(let c of Object.values(a.configs)){for(let b of ['opengl','vulkan']){let x=c.backends?.[b];valid+=n(x?.valid_runs)||0;Object.keys(x?.scenes||{}).forEach(s=>sc.add(s))}Object.keys(c.comparison||{}).forEach(s=>sc.add(s))}let os=sys(d,h),agent=d.agent&&d.agent!=='unknown-agent'?d.agent:'AI agent',label=(d.mode==='ai-agent'||d.agent)?`${agent} · ${os}`:os!=='Unknown OS'?os:name.replace(/\.json$/i,'');if(demo)label+=' (demo)';let fp=JSON.stringify(a);return{id:uid(),name,label,d,a,h,configs:a.configs,invalid:Array.isArray(a.invalid_runs)?a.invalid_runs:[],valid:n(d.valid_runs)??valid,minecraft:d.minecraft||d.result?.minecraft||'Unknown',method:d.method||d.result?.method||'',platform:d.platform||h.platform||os,system:os,scenes:[...sc],fp:fp.length+':'+hash(fp),demo}}
-function hash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0).toString(36)}
-function toast(t,err=false){E.toast.textContent=t;E.toast.className='toast show'+(err?' err':'');clearTimeout(toast.t);toast.t=setTimeout(()=>E.toast.className='toast',2800)}
-async function load(fs){let arr=[...fs].filter(x=>x.name.toLowerCase().endsWith('.json')),added=0,errs=[];if(!arr.length)return toast('Choose one or more .json files.',1);for(let file of arr)try{let d=JSON.parse(await file.text()),x=norm(file.name,d);if(!S.sets.some(y=>y.fp===x.fp)){S.sets.push(x);S.active=x.id;added++}}catch(e){errs.push(`${file.name}: ${e.message}`)}if(S.sets.length>1)S.view='cross';render();if(added)toast(`${added} result${added===1?'':'s'} loaded.`);if(errs.length)toast(errs[0],1);E.files.value=''}
-const DEMO={minecraft:'26.2',method:'ObjectBench v4 · controlled scenes · same runner',mode:'ai-agent',agent:'verified-demo-agent',platform:'Linux-6.11-x86_64',valid_runs:8,aggregate:{invalid_runs:[],configs:{sodium:{label:'Sodium only',backends:{opengl:{valid_runs:2,scenes:{overall:{mean_fps:42.11,median_fps:44.35,one_percent_low_fps:22.30,zero_point_one_percent_low_fps:18.08,p99_frame_ms:44.87},geometry_transparency:{mean_fps:41.57,median_fps:44.2,one_percent_low_fps:22.06,zero_point_one_percent_low_fps:17.9,p99_frame_ms:45.35},occlusion_entities:{mean_fps:38.14,median_fps:40.1,one_percent_low_fps:20.67,zero_point_one_percent_low_fps:15.6,p99_frame_ms:48.43},mixed_block_entities:{mean_fps:46.63,median_fps:49.0,one_percent_low_fps:30.63,zero_point_one_percent_low_fps:24.2,p99_frame_ms:32.69}}},vulkan:{valid_runs:2,scenes:{overall:{mean_fps:36.66,median_fps:38.65,one_percent_low_fps:17.34,zero_point_one_percent_low_fps:11.61,p99_frame_ms:57.78},geometry_transparency:{mean_fps:36.36,median_fps:39.2,one_percent_low_fps:16.87,zero_point_one_percent_low_fps:11.2,p99_frame_ms:59.27},occlusion_entities:{mean_fps:33.35,median_fps:36.2,one_percent_low_fps:16.43,zero_point_one_percent_low_fps:10.5,p99_frame_ms:61.19},mixed_block_entities:{mean_fps:40.29,median_fps:42.3,one_percent_low_fps:26.90,zero_point_one_percent_low_fps:21.4,p99_frame_ms:37.21}}}},comparison:{overall:{vulkan_vs_opengl_pct:-12.92},geometry_transparency:{vulkan_vs_opengl_pct:-12.53},occlusion_entities:{vulkan_vs_opengl_pct:-12.57},mixed_block_entities:{vulkan_vs_opengl_pct:-13.59}}},sodium_badoptimizations:{label:'Sodium + BadOptimizations',backends:{opengl:{valid_runs:2,scenes:{overall:{mean_fps:44.7,median_fps:46.8,one_percent_low_fps:23.5,zero_point_one_percent_low_fps:18.8,p99_frame_ms:42.55}}},vulkan:{valid_runs:2,scenes:{overall:{mean_fps:39.4,median_fps:41.2,one_percent_low_fps:19.1,zero_point_one_percent_low_fps:12.9,p99_frame_ms:52.36}}}},comparison:{overall:{vulkan_vs_opengl_pct:-11.86}}},sodium_bbe:{label:'Sodium + Better Block Entities',backends:{opengl:{valid_runs:2,scenes:{overall:{mean_fps:45.8,median_fps:48.1,one_percent_low_fps:25.4,zero_point_one_percent_low_fps:20.1,p99_frame_ms:39.37}}},vulkan:{valid_runs:2,scenes:{overall:{mean_fps:40.6,median_fps:42.9,one_percent_low_fps:20.5,zero_point_one_percent_low_fps:14.0,p99_frame_ms:48.78}}}},comparison:{overall:{vulkan_vs_opengl_pct:-11.35}}},sodium_full:{label:'Sodium full stack',backends:{opengl:{valid_runs:2,scenes:{overall:{mean_fps:47.2,median_fps:49.6,one_percent_low_fps:27.0,zero_point_one_percent_low_fps:21.3,p99_frame_ms:37.04}}},vulkan:{valid_runs:2,scenes:{overall:{mean_fps:41.9,median_fps:44.0,one_percent_low_fps:21.6,zero_point_one_percent_low_fps:14.8,p99_frame_ms:46.3}}}},comparison:{overall:{vulkan_vs_opengl_pct:-11.23}}}}}};
-function demo(){let x=norm('verified-demo.json',DEMO,true);if(!S.sets.some(y=>y.demo)){S.sets.push(x);S.active=x.id}render();toast('Verified demo loaded. Values are illustrative for the viewer.');}
-function active(){return S.sets.find(x=>x.id===S.active)||S.sets[0]||null}function metric(c,b,sc,m){return n(c?.backends?.[b]?.scenes?.[sc]?.[m])}function delta(c,sc){let x=n(c?.comparison?.[sc]?.vulkan_vs_opengl_pct);if(x!=null)return x;let o=metric(c,'opengl',sc,'mean_fps'),v=metric(c,'vulkan',sc,'mean_fps');return o&&v!=null?(v/o-1)*100:null}
-function configs(){let m=new Map;for(let d of S.sets)for(let[id,c]of Object.entries(d.configs))if(!m.has(id))m.set(id,c.label||id);return[...m].map(([id,label])=>({id,label}))}function scenes(){let z=new Set(['overall']),src=S.view==='run'?[active()].filter(Boolean):S.sets;src.forEach(d=>d.scenes.forEach(x=>z.add(x)));return['overall',...[...z].filter(x=>x!=='overall')]}function rows(){if(S.view==='run'){let d=active();return d?Object.entries(d.configs).map(([id,c])=>({key:id,name:c.label||id,sub:id,c})):[]}let out=[];for(let d of S.sets){let c=d.configs[S.config];if(c)out.push({key:d.id,name:d.label,sub:`MC ${d.minecraft}`,c})}return out}function enriched(){let r=rows().map(x=>({...x,o:metric(x.c,'opengl',S.scene,S.metric),v:metric(x.c,'vulkan',S.scene,S.metric),delta:delta(x.c,S.scene)})),higher=MM[S.metric][2];if(S.sort==='name')r.sort((a,b)=>a.name.localeCompare(b.name));else if(S.sort==='delta')r.sort((a,b)=>(b.delta??-1e9)-(a.delta??-1e9));else r.sort((a,b)=>{let ba=[a.o,a.v].filter(n=>n!=null),bb=[b.o,b.v].filter(n=>n!=null),aa=ba.length?(higher?Math.max(...ba):Math.min(...ba)):(higher?-1e9:1e9),bv=bb.length?(higher?Math.max(...bb):Math.min(...bb)):(higher?-1e9:1e9);return higher?bv-aa:aa-bv});return r}
-function runList(){E.count.textContent=S.sets.length;E.runs.innerHTML=S.sets.map(d=>`<div class="run ${d.id===S.active?'active':''}" data-id="${esc(d.id)}" tabindex="0"><i class="rdot"></i><span class="rcopy"><b>${esc(d.label)}</b><small>MC ${esc(d.minecraft)} · ${d.valid} valid</small></span><button class="remove" data-remove="${esc(d.id)}" aria-label="Remove">×</button></div>`).join('');qa('.run').forEach(r=>{let select=()=>{S.active=r.dataset.id;render()};r.addEventListener('click',e=>{if(!e.target.closest('.remove'))select()});r.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select()}})});qa('[data-remove]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();let id=b.dataset.remove;S.sets=S.sets.filter(x=>x.id!==id);if(S.active===id)S.active=S.sets[0]?.id||null;if(S.sets.length<2)S.view='run';render()}))}
-function controls(){qa('[data-view]').forEach(b=>{b.classList.toggle('active',b.dataset.view===S.view);if(b.dataset.view==='cross')b.disabled=S.sets.length<2});E.configField.hidden=S.view!=='cross';let cs=configs();if(!S.config||!cs.some(x=>x.id===S.config))S.config=cs[0]?.id||null;E.config.innerHTML=cs.map(x=>`<option value="${esc(x.id)}">${esc(x.label)}</option>`).join('');E.config.value=S.config||'';let ss=scenes();if(!ss.includes(S.scene))S.scene='overall';E.scene.innerHTML=ss.map(x=>`<option value="${esc(x)}">${esc(SL[x]||x.replaceAll('_',' '))}</option>`).join('');E.scene.value=S.scene;E.metric.value=S.metric;E.sort.value=S.sort}
-function title(){let d=active();if(S.view==='run'){E.viewLabel.textContent='Run view';E.title.textContent=d?.label||'Result';E.subtitle.textContent=d?`${d.name} · Minecraft ${d.minecraft}`:''}else{let c=configs().find(x=>x.id===S.config);E.viewLabel.textContent='Cross-machine view';E.title.textContent=c?.label||'Machine comparison';E.subtitle.textContent=`${S.sets.length} files · ${SL[S.scene]||S.scene} · ${MM[S.metric][0]}`}}
-function kpis(){let r=rows(),vals=(m,b)=>r.flatMap(x=>['opengl','vulkan'].map(z=>metric(x.c,z,S.scene,m))).filter(x=>x!=null),mean=vals('mean_fps'),low=vals('one_percent_low_fps'),p99=vals('p99_frame_ms'),total=S.view==='run'?(active()?.valid||0):S.sets.reduce((a,d)=>a+d.valid,0);let cards=[['Loaded / valid',S.view==='run'?`1 / ${total}`:`${S.sets.length} / ${total}`,'datasets / valid launches'],['Fastest mean',mean.length?`${Math.max(...mean).toFixed(2)} FPS`:'—','higher is better'],['Best 1% low',low.length?`${Math.max(...low).toFixed(2)} FPS`:'—','higher is better'],['Lowest P99',p99.length?`${Math.min(...p99).toFixed(2)} ms`:'—','lower is better']];E.kpis.innerHTML=cards.map(c=>`<div class="kpi"><span>${c[0]}</span><strong>${c[1]}</strong><small>${c[2]}</small></div>`).join('')}
-function charts(){let r=enriched(),unit=MM[S.metric][1],max=Math.max(1,...r.flatMap(x=>[x.o,x.v]).filter(x=>x!=null));E.chartKick.textContent=`${SL[S.scene]||S.scene} · ${MM[S.metric][0]}`;E.chartTitle.textContent=S.view==='run'?'OpenGL vs Vulkan by configuration':'OpenGL vs Vulkan by machine';E.primary.innerHTML=r.length?r.map(x=>`<div class="bar-row"><div class="bar-label"><b title="${esc(x.name)}">${esc(x.name)}</b><small>${esc(x.sub)}</small></div><div class="bars"><div class="track"><div class="fill gl" style="width:${x.o==null?0:Math.max(1,x.o/max*100)}%"><span class="val">${f(x.o)} ${unit}</span></div></div><div class="track"><div class="fill vk" style="width:${x.v==null?0:Math.max(1,x.v/max*100)}%"><span class="val">${f(x.v)} ${unit}</span></div></div></div></div>`).join(''):'<span class="muted">No comparable rows.</span>';let ma=Math.max(5,...r.map(x=>Math.abs(x.delta||0))),scale=x=>Math.min(50,Math.abs(x)/ma*50);E.delta.innerHTML=r.length?r.slice().sort((a,b)=>(b.delta??-1e9)-(a.delta??-1e9)).map(x=>`<div class="drow"><span class="dname" title="${esc(x.name)}">${esc(x.name)}</span><div class="dtrack">${x.delta==null?'':`<i class="db ${x.delta>=0?'pos':'neg'}" style="width:${scale(x.delta)}%"></i>`}</div><span class="dval ${x.delta==null?'':x.delta>=0?'pos':'neg'}">${pct(x.delta)}</span></div>`).join(''):'<span class="muted">No delta data.</span>'}
-function context(){let d=active(),h=d?.h||{},inv=d?.invalid.length||0,items=[['Minecraft',d?.minecraft||'Unknown'],['Platform',d?.platform||d?.system||'Unknown'],['CPU',h.processor||'Not reported'],['RAM',h.ram_gib?`${h.ram_gib} GiB`:'Not reported'],['Java',h.java_version||'Not reported'],['Method',d?.method||'ObjectBench aggregate'],['Validity',d?`${d.valid} valid · ${inv} invalid`:'—']];E.context.innerHTML=items.map(x=>`<div><dt>${x[0]}</dt><dd>${esc(x[1])}</dd></div>`).join('');E.valid.textContent=inv?`${inv} invalid`:'valid';E.valid.className='valid'+(inv?' bad':'')}
-function table(){let r=enriched(),unit=MM[S.metric][1];E.tableTitle.textContent=S.view==='run'?'Configuration comparison':'Machine comparison';E.thead.innerHTML=`<tr><th>${S.view==='run'?'Configuration':'Dataset'}</th><th>OpenGL ${MM[S.metric][0]}</th><th>Vulkan ${MM[S.metric][0]}</th><th>Vulkan Δ</th><th>OpenGL 1% low</th><th>Vulkan 1% low</th><th>OpenGL P99</th><th>Vulkan P99</th></tr>`;E.tbody.innerHTML=r.map(x=>{let ol=metric(x.c,'opengl',S.scene,'one_percent_low_fps'),vl=metric(x.c,'vulkan',S.scene,'one_percent_low_fps'),op=metric(x.c,'opengl',S.scene,'p99_frame_ms'),vp=metric(x.c,'vulkan',S.scene,'p99_frame_ms');return`<tr><td><b>${esc(x.name)}</b><small>${esc(x.sub)}</small></td><td>${f(x.o)} <span class="muted">${unit}</span></td><td>${f(x.v)} <span class="muted">${unit}</span></td><td class="${x.delta==null?'muted':x.delta>=0?'pos':'neg'}">${pct(x.delta)}</td><td>${f(ol)} <span class="muted">FPS</span></td><td>${f(vl)} <span class="muted">FPS</span></td><td>${f(op)} <span class="muted">ms</span></td><td>${f(vp)} <span class="muted">ms</span></td></tr>`}).join('')}
-function diagnostics(){let ds=S.view==='run'?[active()].filter(Boolean):S.sets,all=ds.flatMap(d=>d.invalid.map(x=>({d,x})));E.diag.hidden=!all.length;if(!all.length)return;E.diagCount.textContent=`${all.length} issue${all.length===1?'':'s'}`;E.diagList.innerHTML=all.map(({d,x})=>`<div class="diag-row"><b>${esc(d.label)}</b><span>${esc(x.config||x.label||'unknown')} · ${esc(x.backend||'unknown')}</span><span>${esc(x.reason||x.error||x.status||'Incomplete run')}</span></div>`).join('')}
-function render(){runList();let has=S.sets.length>0;E.empty.hidden=has;E.dash.hidden=!has;if(!has)return;if(!S.active)S.active=S.sets[0].id;controls();title();kpis();charts();context();table();diagnostics()}
-function csv(){let r=enriched(),head=['name','detail','scene','metric','opengl','vulkan','vulkan_vs_opengl_pct','opengl_1pct_low','vulkan_1pct_low','opengl_p99_ms','vulkan_p99_ms'],out=[head];for(let x of r)out.push([x.name,x.sub,S.scene,MM[S.metric][0],x.o,x.v,x.delta,metric(x.c,'opengl',S.scene,'one_percent_low_fps'),metric(x.c,'vulkan',S.scene,'one_percent_low_fps'),metric(x.c,'opengl',S.scene,'p99_frame_ms'),metric(x.c,'vulkan',S.scene,'p99_frame_ms')]);return out.map(row=>row.map(v=>{let s=v==null?'':String(v);return/[",\n]/.test(s)?`"${s.replaceAll('"','""')}"`:s}).join(',')).join('\n')}
-function exportCsv(){let u=URL.createObjectURL(new Blob([csv()],{type:'text/csv'})),a=document.createElement('a');a.href=u;a.download=`mcbench-${S.view}-${S.scene}-${S.metric}.csv`;a.click();URL.revokeObjectURL(u)}
-E.files.addEventListener('change',e=>load(e.target.files));q('#uploadEmpty').onclick=()=>E.files.click();q('#demoEmpty').onclick=demo;q('#demoSide').onclick=demo;['dragenter','dragover'].forEach(x=>E.drop.addEventListener(x,e=>{e.preventDefault();E.drop.classList.add('over')}));['dragleave','drop'].forEach(x=>E.drop.addEventListener(x,e=>{e.preventDefault();E.drop.classList.remove('over')}));E.drop.addEventListener('drop',e=>load(e.dataTransfer.files));E.drop.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();E.files.click()}});qa('[data-view]').forEach(b=>b.onclick=()=>{if(b.dataset.view==='cross'&&S.sets.length<2)return;S.view=b.dataset.view;render()});E.scene.onchange=()=>{S.scene=E.scene.value;render()};E.metric.onchange=()=>{S.metric=E.metric.value;render()};E.sort.onchange=()=>{S.sort=E.sort.value;render()};E.config.onchange=()=>{S.config=E.config.value;render()};q('#export').onclick=exportCsv;E.theme.onclick=()=>{document.documentElement.dataset.theme=document.documentElement.dataset.theme==='dark'?'light':'dark'};render();if(new URLSearchParams(location.search).has('demo'))demo();
-})();
-</script></body></html>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="MCBench Result Explorer home">
+        <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span>
+          <strong>MCBench</strong>
+          <small>Result Explorer</small>
+        </span>
+      </a>
+      <div class="topbar-actions">
+        <span class="privacy-pill" title="Files are parsed in your browser and never uploaded">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.7 2.8 8.1 7 10 4.2-1.9 7-5.3 7-10V6l-7-3Z"/><path d="m9.5 12 1.7 1.7 3.6-4"/></svg>
+          Local only
+        </span>
+        <button class="icon-button" id="themeToggle" type="button" aria-label="Toggle theme" title="Toggle theme">
+          <svg class="sun-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg class="moon-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 15.5A8.5 8.5 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5Z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside class="sidebar">
+        <div class="sidebar-heading">
+          <div>
+            <span class="eyebrow">Datasets</span>
+            <h1>Benchmark runs</h1>
+          </div>
+          <span class="count-badge" id="runCount">0</span>
+        </div>
+
+        <label class="dropzone" id="dropzone" for="fileInput">
+          <input id="fileInput" type="file" accept="application/json,.json" multiple />
+          <span class="upload-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>
+          </span>
+          <strong>Drop result JSON</strong>
+          <span>summary.json or agent-result.json</span>
+          <kbd>multi-file</kbd>
+        </label>
+
+        <button class="secondary-button wide" id="demoButton" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7L8 5Z"/></svg>
+          Load verified demo
+        </button>
+
+        <div class="run-list" id="runList" aria-live="polite"></div>
+
+        <div class="sidebar-note">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7h.01"/></svg>
+          <p>Nothing is sent to a server. Parsing, comparison, and CSV export happen locally in this tab.</p>
+        </div>
+      </aside>
+
+      <main class="content">
+        <section class="empty-state" id="emptyState">
+          <div class="empty-visual" aria-hidden="true">
+            <div class="ghost-chart">
+              <i style="--h:56%"></i><i style="--h:82%"></i><i style="--h:43%"></i><i style="--h:68%"></i><i style="--h:92%"></i><i style="--h:61%"></i>
+            </div>
+          </div>
+          <span class="eyebrow">ObjectBench results</span>
+          <h2>Turn benchmark JSON into a useful comparison.</h2>
+          <p>Upload one run to compare OpenGL vs Vulkan across mod stacks, or load Windows, Linux, and AI-agent results together to compare the same configuration across machines.</p>
+          <div class="empty-actions">
+            <button class="primary-button" id="emptyUploadButton" type="button">Choose result files</button>
+            <button class="secondary-button" id="emptyDemoButton" type="button">View demo</button>
+          </div>
+          <div class="format-row" aria-label="Supported data">
+            <span>Renderer</span><span>Particles</span><span>Block entities</span><span>Chunks</span><span>Lighting</span><span>Memory</span><span>Network</span>
+          </div>
+        </section>
+
+        <div class="dashboard" id="dashboard" hidden>
+          <div class="dashboard-head">
+            <div>
+              <span class="eyebrow" id="contextEyebrow">Run view</span>
+              <h2 id="dashboardTitle">Result overview</h2>
+              <p id="dashboardSubtitle">Select a dataset to inspect its benchmark results.</p>
+            </div>
+            <div class="view-switch" role="group" aria-label="Comparison view">
+              <button class="view-button active" type="button" data-view="run">Run</button>
+              <button class="view-button" type="button" data-view="cross">Cross-machine</button>
+            </div>
+          </div>
+
+          <div class="control-bar">
+            <label>
+              <span>Suite</span>
+              <select id="suiteSelect"></select>
+            </label>
+            <label>
+              <span>Workload</span>
+              <select id="sceneSelect"></select>
+            </label>
+            <label>
+              <span>Metric</span>
+              <select id="metricSelect">
+                <option value="mean_fps">Mean FPS</option>
+                <option value="median_fps">Median FPS</option>
+                <option value="one_percent_low_fps">1% low FPS</option>
+                <option value="zero_point_one_percent_low_fps">0.1% low FPS</option>
+                <option value="p99_frame_ms">P99 frametime</option>
+              </select>
+            </label>
+            <label id="configControl" hidden>
+              <span>Configuration</span>
+              <select id="configSelect"></select>
+            </label>
+            <button class="secondary-button export-button" id="exportButton" type="button" title="Export current table as CSV">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
+              Export CSV
+            </button>
+          </div>
+
+          <section class="metrics-grid" id="metricsGrid" aria-label="Key benchmark metrics"></section>
+
+          <section class="panel chart-panel">
+            <div class="panel-head">
+              <div>
+                <span class="panel-kicker" id="primaryChartKicker">Selected metric</span>
+                <h3 id="primaryChartTitle">OpenGL vs Vulkan</h3>
+              </div>
+              <div class="legend-inline" aria-label="Chart legend">
+                <span><i class="legend-opengl"></i>OpenGL</span>
+                <span><i class="legend-vulkan"></i>Vulkan</span>
+              </div>
+            </div>
+            <div class="chart-wrap chart-main" id="primaryChart" role="img" aria-label="Benchmark comparison chart"></div>
+          </section>
+
+          <div class="split-grid">
+            <section class="panel chart-panel">
+              <div class="panel-head">
+                <div>
+                  <span class="panel-kicker">Backend delta</span>
+                  <h3>Vulkan vs OpenGL</h3>
+                </div>
+                <span class="lower-note">0% = parity</span>
+              </div>
+              <div class="chart-wrap chart-secondary" id="deltaChart" role="img" aria-label="Backend delta chart"></div>
+            </section>
+
+            <section class="panel context-panel">
+              <div class="panel-head">
+                <div>
+                  <span class="panel-kicker">Run context</span>
+                  <h3>Environment</h3>
+                </div>
+                <span class="status-dot" id="validityBadge">valid</span>
+              </div>
+              <dl class="context-list" id="contextList"></dl>
+            </section>
+          </div>
+
+          <section class="panel table-panel">
+            <div class="panel-head table-head">
+              <div>
+                <span class="panel-kicker">Normalized data</span>
+                <h3 id="tableTitle">Configuration comparison</h3>
+              </div>
+              <label class="sort-control">
+                <span>Sort</span>
+                <select id="sortSelect">
+                  <option value="best">Best first</option>
+                  <option value="name">Name</option>
+                  <option value="delta">Backend delta</option>
+                </select>
+              </label>
+            </div>
+            <div class="table-scroll">
+              <table>
+                <thead id="tableHead"></thead>
+                <tbody id="tableBody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="diagnostics" id="diagnostics" hidden>
+            <div class="diagnostics-title">
+              <div>
+                <span class="panel-kicker">Diagnostics</span>
+                <h3>Invalid or incomplete runs</h3>
+              </div>
+              <span class="warning-badge" id="diagnosticCount"></span>
+            </div>
+            <div id="diagnosticList"></div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
