@@ -1,1 +1,1 @@
-{"source_sha":"7436cddf1ddec2eabcba2317bf6223a1d42bbfb7","windows":"success","linux":"success","ai_agent":"success"}
+{"source_sha":"bd9c80fb63c3ebbd2c0d32603564dc20efb9c263","windows":"success","linux":"success","ai_agent":"success","ai_agent_valid_runs":8,"ai_agent_invalid_runs":0,"validated_configs":["sodium","sodium_badoptimizations","sodium_bbe","sodium_full"],"world":"objectbench-v4"}
