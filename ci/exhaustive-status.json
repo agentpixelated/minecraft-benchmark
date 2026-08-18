@@ -1,10 +1,11 @@
 {
-  "source_sha": "0f81a378c0fb719e09e4a90f062f6acb3feb0417",
+  "run_id": 32174602748,
+  "source_sha": "6b2bb2c408ab36675ce8a7f3b47acb04ee41af6f",
   "gate": "success",
-  "matrix_job": "cancelled",
-  "configs": 176,
+  "matrix_job": "success",
+  "configs": 224,
   "target_configs": 256,
-  "raw_runs": 352,
+  "raw_runs": 448,
   "invalid_runs": 0,
-  "shards_merged": 44
+  "shards_merged": 56
 }

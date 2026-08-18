@@ -1,8 +1,8 @@
 # Exhaustive MCBench powerset screening
 
-- Shards merged: **44**
-- Configs: **176 / 256**
-- Raw runs: **352**
+- Shards merged: **56**
+- Configs: **224 / 256**
+- Raw runs: **448**
 - Invalid runs: **0**
 
 > Screening only: GitHub-hosted Ubuntu uses software graphics. Use this run to find interactions/candidates, then repeat finalists on physical hardware.
@@ -11,141 +11,145 @@
 
 | # | Stack | OpenGL | Vulkan | Vulkan vs OpenGL |
 |---:|---|---:|---:|---:|
-| 1 | Sodium + EntityCulling + Lithium + FerriteCore + BadOptimizations | 57.01 | 48.25 | -15.36% |
-| 2 | Sodium + EntityCulling + MoreCulling + Lithium + BadOptimizations + Better Block Entities | 53.06 | 48.47 | -8.64% |
-| 3 | Sodium + ImmediatelyFast + Lithium | 52.92 | 45.87 | -13.33% |
-| 4 | Sodium + MoreCulling + Lithium + BadOptimizations | 52.92 | 49.49 | -6.48% |
-| 5 | Sodium + EntityCulling + MoreCulling + FerriteCore + Better Block Entities | 40.95 | 37.69 | -7.94% |
-| 6 | Sodium + ImmediatelyFast + Lithium + Better Block Entities | 38.90 | 34.31 | -11.81% |
-| 7 | Sodium + EntityCulling + MoreCulling | 35.18 | 33.00 | -6.19% |
-| 8 | Sodium + EntityCulling + MoreCulling + Lithium + FerriteCore + C2ME | 33.30 | 31.74 | -4.66% |
-| 9 | Sodium + MoreCulling + C2ME + BadOptimizations | 32.54 | 30.26 | -7.03% |
-| 10 | Sodium + EntityCulling + Lithium + FerriteCore + C2ME + BadOptimizations | 31.93 | 31.04 | -2.78% |
-| 11 | Sodium + EntityCulling + C2ME + BadOptimizations | 31.88 | 28.92 | -9.28% |
-| 12 | Sodium + EntityCulling + FerriteCore + C2ME + BadOptimizations | 31.52 | 30.12 | -4.44% |
-| 13 | Sodium + C2ME | 29.89 | 25.84 | -13.54% |
-| 14 | Sodium + ImmediatelyFast + EntityCulling + FerriteCore + C2ME + BadOptimizations | 28.43 | 27.44 | -3.46% |
-| 15 | Sodium + EntityCulling + MoreCulling + Lithium + C2ME + BadOptimizations + Better Block Entities | 28.41 | 27.41 | -3.53% |
+| 1 | Sodium + EntityCulling + MoreCulling + FerriteCore + BadOptimizations | 38.17 | 34.46 | -9.71% |
+| 2 | Sodium + FerriteCore | 36.65 | 33.04 | -9.87% |
+| 3 | Sodium + EntityCulling + FerriteCore + Better Block Entities | 35.83 | 35.29 | -1.50% |
+| 4 | Sodium + FerriteCore + Better Block Entities | 33.56 | 29.46 | -12.21% |
+| 5 | Sodium + ImmediatelyFast + EntityCulling + Lithium + FerriteCore | 30.76 | 25.63 | -16.66% |
+| 6 | Sodium + ImmediatelyFast + EntityCulling + MoreCulling + Better Block Entities | 30.75 | 26.43 | -14.05% |
+| 7 | Sodium + EntityCulling + Lithium + Better Block Entities | 30.62 | 28.96 | -5.43% |
+| 8 | Sodium + Lithium + C2ME + BadOptimizations + Better Block Entities | 30.16 | 27.71 | -8.11% |
+| 9 | Sodium + EntityCulling + Lithium | 29.76 | 25.86 | -13.08% |
+| 10 | Sodium + EntityCulling + MoreCulling + Lithium + BadOptimizations | 28.94 | 27.64 | -4.49% |
+| 11 | Sodium + ImmediatelyFast + FerriteCore + C2ME + BadOptimizations + Better Block Entities | 28.77 | 25.11 | -12.72% |
+| 12 | Sodium + EntityCulling + Lithium + FerriteCore | 28.58 | 25.97 | -9.13% |
+| 13 | Sodium + ImmediatelyFast + MoreCulling + FerriteCore + BadOptimizations + Better Block Entities | 26.20 | 27.15 | +3.61% |
+| 14 | Sodium + EntityCulling | 26.52 | 26.88 | +1.36% |
+| 15 | Sodium + ImmediatelyFast + Lithium + FerriteCore + C2ME + Better Block Entities | 23.94 | 20.83 | -12.96% |
 
 ## Particle
 
 | # | Stack | OpenGL | Vulkan | Vulkan vs OpenGL |
 |---:|---|---:|---:|---:|
-| 1 | Sodium + EntityCulling + MoreCulling + Lithium + BadOptimizations + Better Block Entities | 90.18 | 74.29 | -17.61% |
-| 2 | Sodium + EntityCulling + Lithium + FerriteCore + BadOptimizations | 82.60 | 73.34 | -11.21% |
-| 3 | Sodium + ImmediatelyFast + Lithium | 79.02 | 70.08 | -11.32% |
-| 4 | Sodium + MoreCulling + Lithium + BadOptimizations | 78.85 | 77.58 | -1.61% |
-| 5 | Sodium + EntityCulling + MoreCulling + FerriteCore + Better Block Entities | 72.08 | 64.02 | -11.19% |
-| 6 | Sodium + EntityCulling + MoreCulling | 70.05 | 54.43 | -22.29% |
-| 7 | Sodium + EntityCulling + MoreCulling + Lithium + FerriteCore + C2ME | 69.93 | 60.57 | -13.38% |
-| 8 | Sodium + EntityCulling + C2ME + BadOptimizations | 65.66 | 60.43 | -7.95% |
-| 9 | Sodium + EntityCulling + FerriteCore + C2ME + BadOptimizations | 64.52 | 60.00 | -7.01% |
-| 10 | Sodium + EntityCulling + Lithium + FerriteCore + C2ME + BadOptimizations | 63.94 | 51.15 | -20.00% |
-| 11 | Sodium + C2ME | 63.00 | 53.68 | -14.78% |
-| 12 | Sodium + ImmediatelyFast + Lithium + Better Block Entities | 62.96 | 58.86 | -6.51% |
-| 13 | Sodium + MoreCulling + C2ME + BadOptimizations | 62.67 | 44.48 | -29.02% |
-| 14 | Sodium + EntityCulling + MoreCulling + Lithium + C2ME + BadOptimizations + Better Block Entities | 62.10 | 56.51 | -9.01% |
-| 15 | Sodium + EntityCulling + MoreCulling + BadOptimizations | 59.08 | 50.32 | -14.82% |
+| 1 | Sodium + EntityCulling + MoreCulling + FerriteCore + BadOptimizations | 67.47 | 50.21 | -25.59% |
+| 2 | Sodium + FerriteCore + Better Block Entities | 64.26 | 51.50 | -19.86% |
+| 3 | Sodium + EntityCulling + FerriteCore + Better Block Entities | 60.41 | 55.37 | -8.35% |
+| 4 | Sodium + FerriteCore | 60.33 | 54.80 | -9.17% |
+| 5 | Sodium + EntityCulling + MoreCulling + Lithium + BadOptimizations | 59.77 | 46.11 | -22.87% |
+| 6 | Sodium + ImmediatelyFast + MoreCulling + FerriteCore + BadOptimizations + Better Block Entities | 58.25 | 46.66 | -19.90% |
+| 7 | Sodium + EntityCulling + Lithium + Better Block Entities | 56.09 | 48.51 | -13.51% |
+| 8 | Sodium + EntityCulling + Lithium | 55.16 | 40.60 | -26.40% |
+| 9 | Sodium + Lithium + C2ME + BadOptimizations + Better Block Entities | 54.89 | 46.66 | -15.00% |
+| 10 | Sodium + EntityCulling | 54.48 | 46.36 | -14.90% |
+| 11 | Sodium + ImmediatelyFast + EntityCulling + Lithium + FerriteCore | 54.37 | 47.78 | -12.13% |
+| 12 | Sodium + ImmediatelyFast + EntityCulling + MoreCulling + Better Block Entities | 53.66 | 51.34 | -4.32% |
+| 13 | Sodium + ImmediatelyFast + FerriteCore + C2ME + BadOptimizations + Better Block Entities | 52.23 | 52.85 | +1.18% |
+| 14 | Sodium + EntityCulling + Lithium + FerriteCore | 50.40 | 44.24 | -12.23% |
+| 15 | Sodium + ImmediatelyFast + EntityCulling + MoreCulling + FerriteCore + C2ME + BadOptimizations | 49.30 | 46.85 | -4.97% |
 
 ## Block Entity
 
 | # | Stack | OpenGL | Vulkan | Vulkan vs OpenGL |
 |---:|---|---:|---:|---:|
-| 1 | Sodium + EntityCulling + Lithium + FerriteCore + BadOptimizations | 81.23 | 68.00 | -16.29% |
-| 2 | Sodium + EntityCulling + MoreCulling + Lithium + BadOptimizations + Better Block Entities | 77.51 | 68.37 | -11.79% |
-| 3 | Sodium + MoreCulling + Lithium + BadOptimizations | 77.23 | 62.98 | -18.45% |
-| 4 | Sodium + ImmediatelyFast + Lithium | 74.40 | 62.13 | -16.49% |
-| 5 | Sodium + EntityCulling + MoreCulling + FerriteCore + Better Block Entities | 67.31 | 58.24 | -13.47% |
-| 6 | Sodium + ImmediatelyFast + Lithium + Better Block Entities | 57.22 | 49.74 | -13.07% |
-| 7 | Sodium + EntityCulling + MoreCulling | 55.99 | 52.26 | -6.66% |
-| 8 | Sodium + EntityCulling + MoreCulling + Lithium + FerriteCore + C2ME | 50.18 | 54.58 | +8.76% |
-| 9 | Sodium + EntityCulling + Lithium + FerriteCore + C2ME + BadOptimizations | 51.16 | 41.85 | -18.19% |
-| 10 | Sodium + MoreCulling + C2ME + BadOptimizations | 50.35 | 42.74 | -15.12% |
-| 11 | Sodium + EntityCulling + MoreCulling + BadOptimizations | 47.50 | 35.07 | -26.18% |
-| 12 | Sodium + C2ME | 46.33 | 36.32 | -21.62% |
-| 13 | Sodium + EntityCulling + C2ME + BadOptimizations | 46.24 | 46.16 | -0.17% |
-| 14 | Sodium + EntityCulling + FerriteCore + C2ME + BadOptimizations | 44.90 | 42.06 | -6.33% |
-| 15 | Sodium only | 44.55 | 39.57 | -11.17% |
+| 1 | Sodium + EntityCulling + MoreCulling + FerriteCore + BadOptimizations | 57.09 | 50.22 | -12.04% |
+| 2 | Sodium + EntityCulling + FerriteCore + Better Block Entities | 54.57 | 47.21 | -13.50% |
+| 3 | Sodium + FerriteCore | 52.99 | 49.12 | -7.31% |
+| 4 | Sodium + FerriteCore + Better Block Entities | 50.09 | 44.41 | -11.34% |
+| 5 | Sodium + ImmediatelyFast + EntityCulling + Lithium + FerriteCore | 48.24 | 38.63 | -19.93% |
+| 6 | Sodium + ImmediatelyFast + EntityCulling + MoreCulling + Better Block Entities | 47.34 | 45.71 | -3.44% |
+| 7 | Sodium + ImmediatelyFast + MoreCulling + FerriteCore + BadOptimizations + Better Block Entities | 47.06 | 38.20 | -18.84% |
+| 8 | Sodium + EntityCulling + MoreCulling + Lithium + BadOptimizations | 46.96 | 43.22 | -7.97% |
+| 9 | Sodium + EntityCulling + Lithium | 46.75 | 41.67 | -10.86% |
+| 10 | Sodium + EntityCulling + Lithium + FerriteCore | 46.65 | 38.94 | -16.52% |
+| 11 | Sodium + EntityCulling + Lithium + Better Block Entities | 45.05 | 43.70 | -3.00% |
+| 12 | Sodium + EntityCulling | 44.39 | 38.05 | -14.27% |
+| 13 | Sodium + ImmediatelyFast + FerriteCore + C2ME + BadOptimizations + Better Block Entities | 42.99 | 31.53 | -26.66% |
+| 14 | Sodium + Lithium + C2ME + BadOptimizations + Better Block Entities | 42.65 | 34.02 | -20.23% |
+| 15 | Sodium + ImmediatelyFast + EntityCulling + MoreCulling + FerriteCore + C2ME + BadOptimizations | 36.20 | 33.97 | -6.16% |
 
 ## Chunk Generation
 
 | # | Stack | OpenGL | Vulkan | Vulkan vs OpenGL |
 |---:|---|---:|---:|---:|
-| 1 | Sodium + EntityCulling + Lithium + FerriteCore + BadOptimizations | 58.06 | 51.10 | -11.98% |
-| 2 | Sodium + ImmediatelyFast + Lithium | 54.92 | 42.48 | -22.65% |
-| 3 | Sodium + MoreCulling + Lithium + BadOptimizations | 51.84 | 47.46 | -8.45% |
-| 4 | Sodium + EntityCulling + MoreCulling + Lithium + BadOptimizations + Better Block Entities | 51.74 | 42.68 | -17.51% |
-| 5 | Sodium + EntityCulling + MoreCulling + FerriteCore + Better Block Entities | 46.68 | 43.78 | -6.20% |
-| 6 | Sodium + ImmediatelyFast + MoreCulling + C2ME + BadOptimizations | 45.05 | 40.58 | -9.93% |
-| 7 | Sodium + EntityCulling + Lithium + FerriteCore + C2ME + BadOptimizations | 43.34 | 40.95 | -5.53% |
-| 8 | Sodium + EntityCulling + FerriteCore + C2ME + BadOptimizations | 41.73 | 39.87 | -4.47% |
-| 9 | Sodium + MoreCulling + C2ME + BadOptimizations | 41.64 | 36.63 | -12.03% |
-| 10 | Sodium + EntityCulling + MoreCulling | 41.19 | 36.58 | -11.18% |
-| 11 | Sodium + ImmediatelyFast + MoreCulling + FerriteCore + C2ME + BadOptimizations | 41.08 | 32.03 | -22.01% |
-| 12 | Sodium + EntityCulling + MoreCulling + Lithium + C2ME + BadOptimizations + Better Block Entities | 40.85 | 38.06 | -6.82% |
-| 13 | Sodium + ImmediatelyFast + EntityCulling + FerriteCore + C2ME + BadOptimizations | 40.71 | 40.46 | -0.63% |
-| 14 | Sodium + ImmediatelyFast + FerriteCore + C2ME + Better Block Entities | 40.56 | 31.33 | -22.77% |
-| 15 | Sodium + ImmediatelyFast + Lithium + Better Block Entities | 38.90 | 39.91 | +2.61% |
+| 1 | Sodium + FerriteCore | 44.85 | 36.37 | -18.90% |
+| 2 | Sodium + EntityCulling + FerriteCore + Better Block Entities | 37.92 | 42.67 | +12.51% |
+| 3 | Sodium + FerriteCore + Better Block Entities | 39.33 | 36.62 | -6.89% |
+| 4 | Sodium + ImmediatelyFast + EntityCulling + MoreCulling + Better Block Entities | 38.88 | 35.58 | -8.48% |
+| 5 | Sodium + ImmediatelyFast + EntityCulling + MoreCulling + FerriteCore + C2ME + BadOptimizations | 38.76 | 36.65 | -5.45% |
+| 6 | Sodium + EntityCulling + MoreCulling + Lithium + BadOptimizations | 36.17 | 38.41 | +6.21% |
+| 7 | Sodium + ImmediatelyFast + EntityCulling + Lithium + FerriteCore | 37.66 | 32.03 | -14.94% |
+| 8 | Sodium + ImmediatelyFast + FerriteCore + C2ME + BadOptimizations + Better Block Entities | 37.58 | 35.33 | -5.98% |
+| 9 | Sodium + EntityCulling + MoreCulling + FerriteCore + BadOptimizations | 37.53 | 37.48 | -0.14% |
+| 10 | Sodium + EntityCulling + Lithium + FerriteCore | 36.63 | 29.05 | -20.69% |
+| 11 | Sodium + Lithium + C2ME + BadOptimizations + Better Block Entities | 34.34 | 36.48 | +6.23% |
+| 12 | Sodium + EntityCulling + Lithium | 36.43 | 34.86 | -4.31% |
+| 13 | Sodium + ImmediatelyFast + MoreCulling + FerriteCore + BadOptimizations + Better Block Entities | 34.44 | 30.46 | -11.54% |
+| 14 | Sodium + C2ME + BadOptimizations | 34.30 | 26.99 | -21.29% |
+| 15 | Sodium + EntityCulling + Lithium + Better Block Entities | 33.21 | 29.34 | -11.66% |
 
 ## Lighting
 
 | # | Stack | OpenGL | Vulkan | Vulkan vs OpenGL |
 |---:|---|---:|---:|---:|
-| 1 | Sodium + EntityCulling + Lithium + FerriteCore + BadOptimizations | 88.11 | 75.19 | -14.67% |
-| 2 | Sodium + MoreCulling + Lithium + BadOptimizations | 86.85 | 75.28 | -13.32% |
-| 3 | Sodium + EntityCulling + MoreCulling + Lithium + BadOptimizations + Better Block Entities | 82.93 | 74.50 | -10.17% |
-| 4 | Sodium + ImmediatelyFast + Lithium | 76.87 | 64.10 | -16.62% |
-| 5 | Sodium + EntityCulling + MoreCulling + FerriteCore + Better Block Entities | 69.70 | 56.69 | -18.66% |
-| 6 | Sodium + EntityCulling + MoreCulling + Lithium + FerriteCore + C2ME | 69.25 | 66.16 | -4.45% |
-| 7 | Sodium + EntityCulling + MoreCulling | 67.86 | 58.40 | -13.93% |
-| 8 | Sodium + ImmediatelyFast + Lithium + Better Block Entities | 63.22 | 55.65 | -11.98% |
-| 9 | Sodium + EntityCulling + Lithium + FerriteCore + C2ME + BadOptimizations | 62.15 | 59.04 | -5.00% |
-| 10 | Sodium + EntityCulling + FerriteCore + C2ME + BadOptimizations | 61.65 | 54.59 | -11.45% |
-| 11 | Sodium + C2ME | 61.28 | 56.42 | -7.93% |
-| 12 | Sodium + EntityCulling + MoreCulling + Lithium + FerriteCore | 60.02 | 49.20 | -18.03% |
-| 13 | Sodium + MoreCulling + C2ME + BadOptimizations | 59.39 | 45.78 | -22.92% |
-| 14 | Sodium + EntityCulling + C2ME + BadOptimizations | 56.78 | 58.83 | +3.60% |
-| 15 | Sodium + EntityCulling + MoreCulling + Lithium + C2ME + BadOptimizations + Better Block Entities | 56.68 | 52.39 | -7.56% |
+| 1 | Sodium + EntityCulling + MoreCulling + FerriteCore + BadOptimizations | 62.31 | 56.72 | -8.97% |
+| 2 | Sodium + FerriteCore + Better Block Entities | 61.12 | 47.36 | -22.52% |
+| 3 | Sodium + EntityCulling + FerriteCore + Better Block Entities | 61.08 | 52.70 | -13.72% |
+| 4 | Sodium + EntityCulling + Lithium + FerriteCore | 59.05 | 44.43 | -24.75% |
+| 5 | Sodium + ImmediatelyFast + MoreCulling + FerriteCore + BadOptimizations + Better Block Entities | 58.88 | 49.53 | -15.89% |
+| 6 | Sodium + EntityCulling + MoreCulling + Lithium + BadOptimizations | 58.31 | 49.72 | -14.74% |
+| 7 | Sodium + FerriteCore | 57.85 | 56.43 | -2.47% |
+| 8 | Sodium + ImmediatelyFast + EntityCulling + Lithium + FerriteCore | 55.18 | 40.64 | -26.35% |
+| 9 | Sodium + Lithium + C2ME + BadOptimizations + Better Block Entities | 53.53 | 54.74 | +2.25% |
+| 10 | Sodium + EntityCulling | 54.30 | 42.82 | -21.15% |
+| 11 | Sodium + EntityCulling + Lithium | 54.25 | 46.32 | -14.61% |
+| 12 | Sodium + EntityCulling + Lithium + Better Block Entities | 53.81 | 45.62 | -15.21% |
+| 13 | Sodium + ImmediatelyFast + EntityCulling + MoreCulling + Better Block Entities | 52.90 | 45.29 | -14.38% |
+| 14 | Sodium + ImmediatelyFast + FerriteCore + C2ME + BadOptimizations + Better Block Entities | 52.12 | 46.83 | -10.16% |
+| 15 | Sodium + ImmediatelyFast + EntityCulling + MoreCulling + FerriteCore + C2ME + BadOptimizations | 50.94 | 44.10 | -13.44% |
 
 ## Memory
 
 | # | Stack | OpenGL | Vulkan | Vulkan vs OpenGL |
 |---:|---|---:|---:|---:|
-| 1 | Sodium + ImmediatelyFast + EntityCulling + Lithium + FerriteCore + Better Block Entities | 1759.10 | 1893.04 | +7.61% |
-| 2 | Sodium + Lithium + FerriteCore + BadOptimizations | 1761.96 | 1900.87 | +7.88% |
-| 3 | Sodium + Lithium + FerriteCore + BadOptimizations + Better Block Entities | 1765.15 | 1855.23 | +5.10% |
-| 4 | Sodium + ImmediatelyFast + EntityCulling + MoreCulling + Lithium | 1768.19 | 1911.04 | +8.08% |
-| 5 | Sodium + MoreCulling | 1772.65 | 2159.83 | +21.84% |
-| 6 | Sodium + ImmediatelyFast + Lithium + BadOptimizations + Better Block Entities | 1776.19 | 1865.71 | +5.04% |
-| 7 | Sodium + MoreCulling + Lithium + FerriteCore + BadOptimizations + Better Block Entities | 1781.16 | 1932.59 | +8.50% |
-| 8 | Sodium + Lithium | 1781.83 | 1809.03 | +1.53% |
-| 9 | Sodium + ImmediatelyFast + EntityCulling + MoreCulling + Lithium + Better Block Entities | 1784.53 | 1901.60 | +6.56% |
-| 10 | Sodium + EntityCulling + MoreCulling + Lithium + FerriteCore + Better Block Entities | 1854.88 | 1791.40 | -3.42% |
-| 11 | Sodium + MoreCulling + Lithium + C2ME + BadOptimizations | 1794.41 | 1942.43 | +8.25% |
-| 12 | Sodium + ImmediatelyFast + Lithium + FerriteCore + BadOptimizations | 1797.65 | 1835.04 | +2.08% |
-| 13 | Sodium + ImmediatelyFast + EntityCulling + Lithium + Better Block Entities | 1800.98 | 1867.22 | +3.68% |
-| 14 | Sodium + EntityCulling + MoreCulling + FerriteCore | 1805.38 | 1922.69 | +6.50% |
-| 15 | Sodium + Lithium + FerriteCore + Better Block Entities | 1848.11 | 1805.44 | -2.31% |
+| 1 | Sodium + EntityCulling + MoreCulling + Lithium + BadOptimizations + Better Block Entities | 1743.94 | 1870.86 | +7.28% |
+| 2 | Sodium + EntityCulling + Lithium + FerriteCore + BadOptimizations | 1748.97 | 1899.18 | +8.59% |
+| 3 | Sodium + Lithium + BadOptimizations + Better Block Entities | 1753.56 | 1906.71 | +8.73% |
+| 4 | Sodium + MoreCulling + Lithium + BadOptimizations | 1754.99 | 2075.13 | +18.24% |
+| 5 | Sodium + EntityCulling + MoreCulling + Lithium + FerriteCore | 1760.86 | 2009.12 | +14.10% |
+| 6 | Sodium + Lithium + FerriteCore + BadOptimizations + Better Block Entities | 1793.50 | 1762.32 | -1.74% |
+| 7 | Sodium + Lithium + FerriteCore + BadOptimizations | 1765.76 | 1829.85 | +3.63% |
+| 8 | Sodium + ImmediatelyFast + Lithium + FerriteCore + Better Block Entities | 1770.55 | 1916.39 | +8.24% |
+| 9 | Sodium + EntityCulling + Lithium + FerriteCore + Better Block Entities | 1772.98 | 2054.94 | +15.90% |
+| 10 | Sodium + ImmediatelyFast + MoreCulling + Lithium + FerriteCore | 1773.41 | 1888.19 | +6.47% |
+| 11 | Sodium + EntityCulling + Lithium + BadOptimizations | 1837.00 | 1781.81 | -3.00% |
+| 12 | Sodium + Lithium + FerriteCore | 1784.71 | 1894.13 | +6.13% |
+| 13 | Sodium + EntityCulling + MoreCulling + Lithium + FerriteCore + Better Block Entities | 1787.84 | 1909.21 | +6.79% |
+| 14 | Sodium + EntityCulling + FerriteCore + C2ME + BadOptimizations + Better Block Entities | 1787.99 | 1944.70 | +8.76% |
+| 15 | Sodium + EntityCulling + MoreCulling + Lithium + FerriteCore + C2ME + BadOptimizations | 1788.29 | 1920.17 | +7.37% |
 
 ## Network
 
 | # | Stack | OpenGL | Vulkan | Vulkan vs OpenGL |
 |---:|---|---:|---:|---:|
-| 1 | Sodium + EntityCulling + Lithium + FerriteCore + BadOptimizations | 88.77 | 68.71 | -22.60% |
-| 2 | Sodium + MoreCulling + Lithium + BadOptimizations | 87.45 | 69.92 | -20.04% |
-| 3 | Sodium + ImmediatelyFast + Lithium | 82.09 | 70.53 | -14.08% |
-| 4 | Sodium + EntityCulling + MoreCulling + Lithium + BadOptimizations + Better Block Entities | 81.11 | 74.82 | -7.75% |
-| 5 | Sodium + EntityCulling + MoreCulling + FerriteCore + Better Block Entities | 76.02 | 66.52 | -12.49% |
-| 6 | Sodium + C2ME | 70.78 | 58.74 | -17.01% |
-| 7 | Sodium + EntityCulling + C2ME + BadOptimizations | 68.33 | 63.46 | -7.12% |
-| 8 | Sodium + EntityCulling + MoreCulling + Lithium + FerriteCore + C2ME | 67.73 | 65.62 | -3.11% |
-| 9 | Sodium + MoreCulling + C2ME + BadOptimizations | 66.50 | 50.72 | -23.72% |
-| 10 | Sodium + EntityCulling + MoreCulling + Lithium + C2ME + BadOptimizations + Better Block Entities | 64.26 | 51.96 | -19.14% |
-| 11 | Sodium + EntityCulling + FerriteCore + C2ME + BadOptimizations | 63.51 | 58.77 | -7.46% |
-| 12 | Sodium + EntityCulling + Lithium + FerriteCore + C2ME + BadOptimizations | 63.34 | 55.78 | -11.93% |
-| 13 | Sodium + ImmediatelyFast + Lithium + Better Block Entities | 62.78 | 54.81 | -12.70% |
-| 14 | Sodium + ImmediatelyFast + MoreCulling + C2ME + BadOptimizations | 60.28 | 53.29 | -11.61% |
-| 15 | Sodium + EntityCulling + MoreCulling | 59.62 | 56.92 | -4.53% |
+| 1 | Sodium + EntityCulling + MoreCulling + FerriteCore + BadOptimizations | 68.74 | 48.06 | -30.09% |
+| 2 | Sodium + FerriteCore | 61.98 | 51.99 | -16.12% |
+| 3 | Sodium + Lithium + C2ME + BadOptimizations + Better Block Entities | 61.01 | 51.45 | -15.66% |
+| 4 | Sodium + EntityCulling + MoreCulling + Lithium + BadOptimizations | 60.28 | 46.67 | -22.58% |
+| 5 | Sodium + FerriteCore + Better Block Entities | 58.47 | 50.63 | -13.40% |
+| 6 | Sodium + ImmediatelyFast + FerriteCore + C2ME + BadOptimizations + Better Block Entities | 57.32 | 46.45 | -18.96% |
+| 7 | Sodium + ImmediatelyFast + EntityCulling + MoreCulling + Better Block Entities | 56.48 | 50.94 | -9.81% |
+| 8 | Sodium + EntityCulling + FerriteCore + Better Block Entities | 55.51 | 55.33 | -0.31% |
+| 9 | Sodium + ImmediatelyFast + MoreCulling + FerriteCore + BadOptimizations + Better Block Entities | 54.75 | 46.80 | -14.52% |
+| 10 | Sodium + EntityCulling + Lithium | 54.71 | 46.45 | -15.10% |
+| 11 | Sodium + ImmediatelyFast + EntityCulling + Lithium + FerriteCore | 53.09 | 46.34 | -12.72% |
+| 12 | Sodium + ImmediatelyFast + EntityCulling + MoreCulling + FerriteCore + C2ME + BadOptimizations | 52.94 | 47.20 | -10.84% |
+| 13 | Sodium + EntityCulling + Lithium + FerriteCore + C2ME + Better Block Entities | 52.55 | 43.11 | -17.96% |
+| 14 | Sodium + EntityCulling | 52.52 | 44.60 | -15.07% |
+| 15 | Sodium + ImmediatelyFast + EntityCulling + MoreCulling + Lithium + FerriteCore + C2ME + BadOptimizations + Better Block Entities | 51.48 | 39.83 | -22.64% |
+
+## Render Scale + Super Resolution
+
+Status: **special_super_resolution**. Dedicated OpenGL-only matrix with native, raw RenderScale controls, and Super Resolution algorithms at matched internal render scales. RenderScale and Super Resolution are not stacked in the same profile.
 
 ## Save / Quit
 
