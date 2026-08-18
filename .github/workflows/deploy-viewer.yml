@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -26,6 +26,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Enable Pages Actions mode when needed
         env:
           GH_TOKEN: ${{ github.token }}
@@ -37,3 +39,16 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Record verified deployment
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          mkdir -p ci
+          printf '{"source_sha":"%s","status":"success","url":"%s"}\n' "$SOURCE_SHA" "$PAGE_URL" > ci/viewer-deployment.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git pull --rebase
+          git add ci/viewer-deployment.json
+          git commit -m 'Record verified benchmark viewer deployment' || true
+          git push
