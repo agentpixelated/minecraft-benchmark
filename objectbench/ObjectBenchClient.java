@@ -8,9 +8,33 @@ import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.fabricmc.loader.api.FabricLoader;
 
 public final class ObjectBenchClient implements ClientModInitializer {
-    static final String[] NAMES = {"geometry_transparency", "occlusion_entities", "mixed_block_entities"};
-    static final double[][] START = {{-36,12,-40}, {124,11,-40}, {284,12,-40}};
-    static final double[][] END   = {{ 36,12,-40}, {196,11,-40}, {356,12,-40}};
+    static final String[] NAMES = {
+        "geometry_transparency",
+        "occlusion_entities",
+        "mixed_block_entities",
+        "particle_stress",
+        "lighting_updates",
+        "network_updates",
+        "chunk_generation"
+    };
+    static final double[][] START = {
+        {-36,12,-40},
+        {124,11,-40},
+        {284,12,-40},
+        {444,12,-40},
+        {604,12,-40},
+        {764,12,-40},
+        {1984,90,0}
+    };
+    static final double[][] END = {
+        {36,12,-40},
+        {196,11,-40},
+        {356,12,-40},
+        {516,12,-40},
+        {676,12,-40},
+        {836,12,-40},
+        {2624,90,0}
+    };
 
     static long envMs(String key, long def) {
         try { return Long.parseLong(System.getenv().getOrDefault(key, Long.toString(def))); }
@@ -18,12 +42,18 @@ public final class ObjectBenchClient implements ClientModInitializer {
     }
 
     static final long INITIAL = envMs("BENCH_INITIAL_MS", 8000) * 1_000_000L;
-    static final long WARM    = envMs("BENCH_WARM_MS", 3000) * 1_000_000L;
+    static final long WARM = envMs("BENCH_WARM_MS", 3000) * 1_000_000L;
     static final long MEASURE = envMs("BENCH_MEASURE_MS", 8000) * 1_000_000L;
-    static final long SCENE   = WARM + MEASURE;
+    static final long SCENE = WARM + MEASURE;
 
     @SuppressWarnings("unchecked")
-    static final List<Long>[] S = new List[]{new ArrayList<>(), new ArrayList<>(), new ArrayList<>()};
+    static List<Long>[] makeSamples() {
+        List<Long>[] out = new List[NAMES.length];
+        for (int i = 0; i < out.length; i++) out[i] = new ArrayList<>();
+        return out;
+    }
+
+    static final List<Long>[] S = makeSamples();
     static final List<Long> ALL = new ArrayList<>();
     static long boot = 0, lastFrame = 0;
     static boolean done = false;
@@ -58,9 +88,11 @@ public final class ObjectBenchClient implements ClientModInitializer {
             long within = q % SCENE;
             double p = Math.min(1.0, within / (double)SCENE);
             double x = START[scene][0] + (END[scene][0] - START[scene][0]) * p;
-            client.player.setPos(x, START[scene][1], START[scene][2]);
+            double y = START[scene][1] + (END[scene][1] - START[scene][1]) * p;
+            double z = START[scene][2] + (END[scene][2] - START[scene][2]) * p;
+            client.player.setPos(x, y, z);
             client.player.setYRot((float)(Math.sin(p * Math.PI * 2.0) * 7.0));
-            client.player.setXRot(-3.0f);
+            client.player.setXRot(scene == NAMES.length - 1 ? 12.0f : -3.0f);
         });
 
         LevelRenderEvents.END_MAIN.register(ctx -> frame());
