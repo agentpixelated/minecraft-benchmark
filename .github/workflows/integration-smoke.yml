@@ -4,6 +4,11 @@ on:
   push:
     paths:
       - '.github/workflows/integration-smoke.yml'
+      - 'run-agent.py'
+      - 'AGENTS.md'
+      - 'mcbench/**'
+      - 'benchmark-config.json'
+      - 'objectbench/**'
   workflow_dispatch:
 
 jobs:
@@ -32,6 +37,38 @@ jobs:
         with:
           name: linux-integration-smoke-results
           path: |
+            results/
+            .mcbench/game/logs/latest.log
+          if-no-files-found: ignore
+          retention-days: 3
+
+  ai-agent-quick-benchmark:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run AI-agent/headless path without preinstalled display stack
+        env:
+          AI_AGENT_NAME: github-actions-agent
+          MC_EULA_ACCEPTED: '1'
+        run: python3 run-agent.py --quick --configs sodium,sodium_full
+      - name: Verify machine-readable agent result
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('agent-result.json'))
+          assert d['mode']=='ai-agent', d
+          assert d['status']=='success', d
+          assert d['invalid_runs']==0, d
+          assert d['valid_runs']==4, d
+          print(json.dumps({k:d[k] for k in ('status','agent','headless','valid_runs','invalid_runs')}, indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai-agent-integration-smoke-results
+          path: |
+            agent-result.json
             results/
             .mcbench/game/logs/latest.log
           if-no-files-found: ignore
