@@ -19,8 +19,12 @@ jobs:
       - name: Install runtime dependencies
         run: python -m pip install portablemc==4.4.1 psutil
       - name: Compile Python sources
-        run: python -m compileall -q benchmark.py mcbench
+        run: python -m compileall -q benchmark.py run-agent.py mcbench
       - name: Validate benchmark config
         run: python -c "import json; json.load(open('benchmark-config.json', encoding='utf-8')); print('config ok')"
       - name: Run repository self-test
         run: python benchmark.py --self-test
+      - name: Run AI-agent contract self-test
+        run: python run-agent.py --self-test --json-out agent-self-test.json
+      - name: Validate AI-agent self-test output
+        run: python -c "import json; d=json.load(open('agent-self-test.json')); assert d['status']=='self-test-ok', d; print(d)"
