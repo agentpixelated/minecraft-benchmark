@@ -51,13 +51,19 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
-      - name: Install graphics runtime
+      - name: Ensure minimal headless OpenGL runtime
+        shell: bash
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq xvfb mesa-vulkan-drivers libvulkan1
+          set -euo pipefail
+          if ! command -v xvfb-run >/dev/null 2>&1; then
+            timeout 120s sudo apt-get update -qq
+            timeout 180s sudo apt-get install -y -qq xvfb
+          fi
+          test -x "$(command -v xvfb-run)"
       - name: Run native, disabled-overhead, FSR1 and SGSR1 profiles
         env:
           MC_EULA_ACCEPTED: '1'
+          LIBGL_ALWAYS_SOFTWARE: '1'
         run: xvfb-run -a ./run-linux.sh --quick --super-resolution --configs sr_native,sr_mod_disabled,sr_fsr1_quality,sr_sgsr1_quality --accept-eula
       - name: Verify SR profile proof and result schema
         run: |
