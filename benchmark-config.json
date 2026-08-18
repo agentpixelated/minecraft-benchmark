@@ -1,0 +1,40 @@
+{
+  "minecraft_version": "26.2",
+  "base_mods": ["fabric-api", "sodium"],
+  "window": {"width": 960, "height": 540},
+  "video": {
+    "render_distance": 10,
+    "simulation_distance": 8,
+    "max_fps": 260,
+    "graphics_mode": 1,
+    "mipmap_levels": 2,
+    "entity_distance_scaling": 1.0,
+    "clouds": false,
+    "vsync": false
+  },
+  "benchmark": {
+    "initial_seconds": 8,
+    "warmup_seconds": 3,
+    "measure_seconds": 8,
+    "repeats_per_backend": 2,
+    "cooldown_seconds": 2,
+    "backend_proof_timeout_seconds": 90,
+    "result_timeout_seconds": 90
+  },
+  "configs": [
+    {"id": "sodium", "label": "Sodium only", "mods": []},
+    {"id": "sodium_immediatelyfast", "label": "Sodium + ImmediatelyFast", "mods": ["immediatelyfast"]},
+    {"id": "sodium_entityculling", "label": "Sodium + EntityCulling", "mods": ["entityculling"]},
+    {"id": "sodium_moreculling", "label": "Sodium + MoreCulling", "mods": ["moreculling"]},
+    {"id": "sodium_lithium", "label": "Sodium + Lithium", "mods": ["lithium"]},
+    {"id": "sodium_ferritecore", "label": "Sodium + FerriteCore", "mods": ["ferrite-core"]},
+    {"id": "sodium_c2me", "label": "Sodium + C2ME", "mods": ["c2me-fabric"], "note": "Steady-state FPS only; use a separate chunk benchmark to judge C2ME."},
+    {"id": "sodium_if_mc", "label": "Sodium + ImmediatelyFast + MoreCulling", "mods": ["immediatelyfast", "moreculling"]},
+    {"id": "sodium_if_lithium", "label": "Sodium + ImmediatelyFast + Lithium", "mods": ["immediatelyfast", "lithium"]},
+    {"id": "sodium_mc_lithium", "label": "Sodium + MoreCulling + Lithium", "mods": ["moreculling", "lithium"]},
+    {"id": "sodium_if_mc_lithium", "label": "Sodium + ImmediatelyFast + MoreCulling + Lithium", "mods": ["immediatelyfast", "moreculling", "lithium"]},
+    {"id": "sodium_ec_mc_lithium", "label": "Sodium + EntityCulling + MoreCulling + Lithium", "mods": ["entityculling", "moreculling", "lithium"]},
+    {"id": "sodium_full_no_c2me", "label": "Full stack without C2ME", "mods": ["immediatelyfast", "entityculling", "moreculling", "lithium", "ferrite-core"]},
+    {"id": "sodium_full", "label": "Full stack", "mods": ["immediatelyfast", "entityculling", "moreculling", "lithium", "ferrite-core", "c2me-fabric"]}
+  ]
+}
