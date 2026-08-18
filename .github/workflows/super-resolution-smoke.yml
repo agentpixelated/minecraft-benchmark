@@ -47,7 +47,7 @@ jobs:
         shell: pwsh
         env:
           MC_EULA_ACCEPTED: '1'
-        run: .\run-windows.ps1 --quick --super-resolution --configs sr_native,sr_mod_disabled,sr_fsr1_quality --accept-eula --prepare-only
+        run: .\run-windows.ps1 --quick --super-resolution --configs "sr_native,sr_mod_disabled,sr_fsr1_quality" --accept-eula --prepare-only
 
   linux-runtime:
     needs: announce
