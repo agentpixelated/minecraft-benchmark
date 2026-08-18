@@ -49,7 +49,7 @@ The Windows/Linux launchers bootstrap `uv`, Python, PortableMC, and Java 25 when
 
 ## Default mod matrix
 
-Every selected stack is tested on both OpenGL and Vulkan. The current default matrix contains 14 stacks:
+Every selected stack is tested on both OpenGL and Vulkan. The current default matrix contains **16 stacks**:
 
 - Sodium only
 - + ImmediatelyFast
@@ -57,6 +57,8 @@ Every selected stack is tested on both OpenGL and Vulkan. The current default ma
 - + MoreCulling
 - + Lithium
 - + FerriteCore
+- + BadOptimizations
+- + Better Block Entities
 - + C2ME
 - ImmediatelyFast + MoreCulling
 - ImmediatelyFast + Lithium
@@ -76,13 +78,13 @@ ObjectBench currently uses three deterministic steady-state scenes:
 
 1. **Geometry + transparency** — leaves, glass, fences, bars, walls, stairs, trapdoors.
 2. **Occlusion + entities** — opaque occluders, hidden no-AI entities, and block entities.
-3. **Mixed block entities** — visible transparent/non-cubic geometry, block entities, and no-AI entities.
+3. **Mixed block entities** — visible transparent/non-cubic geometry, no-AI entities, plus a dense BBE-relevant set of chests, shulker boxes, decorated pots, signs, and bells.
 
 The client benchmark mod controls player position and camera directly. There is no mouse/keyboard automation. Benchmark chunks are generated before FPS measurement, time/weather/random ticks are frozen, and the pristine world template is restored before every run.
 
 ## Standard methodology
 
-Default mode uses **2 repetitions per backend**. With the current 14-stack matrix this is 56 Minecraft launches. Backend order is balanced ABBA/BAAB by stack to reduce order drift.
+Default mode uses **2 repetitions per backend**. With the current 16-stack matrix this is **64 Minecraft launches**. Backend order is balanced ABBA/BAAB by stack to reduce order drift.
 
 Each run has:
 
@@ -130,7 +132,7 @@ Quick mode uses one repetition per backend and shorter sampling. Use standard mo
 ## Selected stacks / backend diagnostics
 
 ```bash
-./run-linux.sh --configs sodium,sodium_immediatelyfast,sodium_if_lithium
+./run-linux.sh --configs sodium,sodium_badoptimizations,sodium_bbe,sodium_if_lithium
 ./run-linux.sh --backend opengl --configs sodium
 ./run-linux.sh --backend vulkan --configs sodium
 ```
@@ -202,9 +204,9 @@ The token is attached only to requests sent to `api.modrinth.com`, is not sent t
 
 Permanent integration CI covers all three supported paths:
 
-- **Windows:** full benchmark environment preparation through the Windows launcher.
+- **Windows:** full benchmark environment preparation through the Windows launcher, including resolution of the complete mod matrix.
 - **Linux:** real quick OpenGL + Vulkan benchmark through the Linux launcher.
-- **AI agent:** real headless quick OpenGL + Vulkan benchmark through `run-agent.py`, plus validation of `agent-result.json`.
+- **AI agent:** real headless OpenGL + Vulkan benchmark through `run-agent.py`, including Sodium baseline, BadOptimizations, Better Block Entities, and full stack, plus validation of `agent-result.json`.
 
 The latest machine-readable three-platform CI status is written to `ci/integration-smoke.json`.
 
