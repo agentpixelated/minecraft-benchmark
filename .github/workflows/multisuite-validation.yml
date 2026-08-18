@@ -51,7 +51,9 @@ jobs:
               assert required <= set(r['scenes']), (required-set(r['scenes']))
               assert r.get('process_metrics',{}).get('peak_rss_mb',0)>0
           suites=d['suite_results']['configs']['sodium']['suites']
-          assert {'renderer_fps','particle','block_entity','chunk_generation','lighting','memory','network','save_quit'} <= set(suites)
+          expected={'renderer_fps','particle','block_entity','chunk_generation','lighting','memory','network','super_resolution','save_quit'}
+          assert expected == set(suites), (expected,set(suites))
+          assert suites['super_resolution']['status']=='not_applicable'
           assert suites['save_quit']['status']=='planned'
           print(json.dumps({'status':'success','valid_runs':2,'suites':list(suites),'matrix':d['matrix']},indent=2))
           PY
@@ -60,7 +62,7 @@ jobs:
           SOURCE_SHA: ${{ github.sha }}
         run: |
           mkdir -p ci
-          printf '{"source_sha":"%s","status":"success","valid_runs":2,"suites":8,"exhaustive_configs":256}\n' "$SOURCE_SHA" > ci/multisuite-validation.json
+          printf '{"source_sha":"%s","status":"success","valid_runs":2,"suites":9,"exhaustive_configs":256}\n' "$SOURCE_SHA" > ci/multisuite-validation.json
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git pull --rebase
