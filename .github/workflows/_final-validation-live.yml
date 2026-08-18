@@ -1,0 +1,31 @@
+name: Temporary final validation live status
+
+on:
+  push:
+    paths:
+      - '.github/workflows/_final-validation-live.yml'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Record latest final validation run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p ci
+          gh run list --workflow _final-validation.yml --limit 1 --json databaseId,status,conclusion,createdAt,headSha > ci/final-validation-live.json
+          cat ci/final-validation-live.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git pull --rebase
+          git add ci/final-validation-live.json
+          git commit -m 'Record temporary final validation live status' || true
+          git push
