@@ -9,6 +9,8 @@ import time
 from pathlib import Path
 from typing import Any
 
+import psutil
+
 from .common import GAME, MOD_CACHE, WORLD_TEMPLATE, log, pmc_base, safe_rmtree
 from .prepare import java_env
 
@@ -53,6 +55,19 @@ def write_options(cfg: dict[str, Any]) -> None:
     (GAME/"options.txt").write_text("\n".join(f"{k}:{val}" for k,val in opts.items())+"\n",encoding="utf-8")
 
 
+def process_tree_rss_mb(pid: int) -> float:
+    try:
+        root = psutil.Process(pid)
+        procs = [root, *root.children(recursive=True)]
+        total = 0
+        for p in procs:
+            try: total += p.memory_info().rss
+            except (psutil.NoSuchProcess, psutil.AccessDenied): pass
+        return total / (1024 * 1024)
+    except (psutil.NoSuchProcess, psutil.AccessDenied):
+        return 0.0
+
+
 def kill_process_tree(proc: subprocess.Popen | None) -> None:
     if proc is None: return
     try:
@@ -81,9 +96,10 @@ def launch_one(config_id: str, backend: str, rep: int, cfg: dict[str, Any], run_
     wh=cfg["window"]; command=pmc_base()+["start","-u","BenchUser","--resolution",f"{wh['width']}x{wh['height']}",f"fabric:{cfg['minecraft_version']}"]
     out=log_path.open("w",encoding="utf-8",errors="replace"); flags=subprocess.CREATE_NEW_PROCESS_GROUP if os.name=="nt" else 0
     proc=subprocess.Popen(command,env=env,stdout=out,stderr=subprocess.STDOUT,text=True,creationflags=flags,start_new_session=(os.name!="nt"))
-    valid=False; reason="backend_not_proven"; deadline=time.time()+int(b["backend_proof_timeout_seconds"])
+    valid=False; reason="backend_not_proven"; deadline=time.time()+int(b["backend_proof_timeout_seconds"]); peak_rss_mb=0.0
     try:
         while time.time()<deadline:
+            peak_rss_mb=max(peak_rss_mb,process_tree_rss_mb(proc.pid))
             txt=log_path.read_text(errors="ignore") if log_path.exists() else ""
             if backend=="vulkan":
                 if "Failed to create backend Vulkan" in txt or "Using graphics backend OpenGL" in txt: reason="vulkan_failed_or_fell_back_to_opengl"; break
@@ -96,12 +112,15 @@ def launch_one(config_id: str, backend: str, rep: int, cfg: dict[str, Any], run_
         if valid:
             deadline=time.time()+int(b["result_timeout_seconds"])
             while time.time()<deadline and not result.exists():
+                peak_rss_mb=max(peak_rss_mb,process_tree_rss_mb(proc.pid))
                 if proc.poll() is not None: break
                 time.sleep(.5)
         if valid and result.exists():
-            data=json.loads(result.read_text(encoding="utf-8")); data.update({"config":config_id,"label":selected["label"],"backend":backend,"rep":rep,"backend_proven":True,"mods":files})
+            peak_rss_mb=max(peak_rss_mb,process_tree_rss_mb(proc.pid))
+            data=json.loads(result.read_text(encoding="utf-8")); data.update({"config":config_id,"label":selected["label"],"backend":backend,"rep":rep,"backend_proven":True,"mods":files,
+                "process_metrics":{"peak_rss_mb":round(peak_rss_mb,3)}})
             raw=run_dir/"runs"/f"{tag}.json"; raw.parent.mkdir(parents=True,exist_ok=True); raw.write_text(json.dumps(data,indent=2),encoding="utf-8"); return data
         txt=log_path.read_text(errors="ignore") if log_path.exists() else ""
-        return {"config":config_id,"label":selected["label"],"backend":backend,"rep":rep,"status":"invalid","reason":reason,"mods":files,"log_tail":txt[-4000:]}
+        return {"config":config_id,"label":selected["label"],"backend":backend,"rep":rep,"status":"invalid","reason":reason,"mods":files,"process_metrics":{"peak_rss_mb":round(peak_rss_mb,3)},"log_tail":txt[-4000:]}
     finally:
         kill_process_tree(proc); out.close(); time.sleep(float(b["cooldown_seconds"]))
