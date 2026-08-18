@@ -67,11 +67,11 @@
       "note": "Integrated-server loopback update stress; this is not internet latency/throughput."
     },
     "super_resolution": {
-      "label": "Super Resolution",
+      "label": "Render Scale + Super Resolution",
       "kind": "special_super_resolution",
       "scenes": ["geometry_transparency", "occlusion_entities", "mixed_block_entities"],
       "primary_metric": "mean_fps",
-      "note": "Dedicated OpenGL-only suite. Minecraft 26.2 Super Resolution builds disable their upscaling features on the native Vulkan backend."
+      "note": "Dedicated OpenGL-only cross-product of internal render scale and upscaling algorithm. Minecraft 26.2 Super Resolution builds disable their upscaling features on the native Vulkan backend."
     },
     "save_quit": {
       "label": "Save / Quit",
@@ -84,18 +84,22 @@
     "mod": "superresolution",
     "backend": "opengl",
     "sharpness": 0.55,
-    "profiles": [
-      {"id": "sr_mod_disabled", "label": "SR mod installed, disabled", "enabled": false},
-      {"id": "sr_fsr1_quality", "label": "FSR 1 Quality (66.7% render)", "enabled": true, "algorithm": "fsr1", "upscale_ratio": 1.5},
-      {"id": "sr_fsr1_balanced", "label": "FSR 1 Balanced (58.8% render)", "enabled": true, "algorithm": "fsr1", "upscale_ratio": 1.7},
-      {"id": "sr_fsr1_performance", "label": "FSR 1 Performance (50% render)", "enabled": true, "algorithm": "fsr1", "upscale_ratio": 2.0},
-      {"id": "sr_sgsr1_quality", "label": "SGSR 1 Quality (66.7% render)", "enabled": true, "algorithm": "sgsr1", "upscale_ratio": 1.5},
-      {"id": "sr_sgsr2_quality", "label": "SGSR 2 Quality (66.7% render)", "enabled": true, "algorithm": "sgsr2", "upscale_ratio": 1.5},
-      {"id": "sr_fsr2_quality", "label": "FSR 2 OpenGL Quality (66.7% render)", "enabled": true, "algorithm": "fsr2", "upscale_ratio": 1.5, "hardware_optional": true},
-      {"id": "sr_fsr_v2_quality", "label": "FidelityFX FSR 2.3.3 Quality (66.7% render)", "enabled": true, "algorithm": "fsr", "upscale_ratio": 1.5, "fsr_version": "V2", "hardware_optional": true},
-      {"id": "sr_fsr_v3_quality", "label": "FidelityFX FSR 3.1.4 Quality (66.7% render)", "enabled": true, "algorithm": "fsr", "upscale_ratio": 1.5, "fsr_version": "V3", "hardware_optional": true},
-      {"id": "sr_xess_quality", "label": "XeSS Quality (58.8% render)", "enabled": true, "algorithm": "xess", "upscale_ratio": 1.7, "hardware_optional": true},
-      {"id": "sr_dlss_quality", "label": "DLSS Quality (66.7% render)", "enabled": true, "algorithm": "dlss", "upscale_ratio": 1.5, "hardware_optional": true}
+    "render_scales": [
+      1.0,
+      0.75,
+      0.6666666667,
+      0.5882352941,
+      0.5
+    ],
+    "algorithms": [
+      {"id": "fsr1", "label": "FSR 1", "algorithm": "fsr1"},
+      {"id": "sgsr1", "label": "SGSR 1", "algorithm": "sgsr1"},
+      {"id": "sgsr2", "label": "SGSR 2", "algorithm": "sgsr2"},
+      {"id": "fsr2", "label": "FSR 2 OpenGL", "algorithm": "fsr2", "hardware_optional": true},
+      {"id": "fsr_v2", "label": "FidelityFX FSR 2.3.3", "algorithm": "fsr", "fsr_version": "V2", "hardware_optional": true},
+      {"id": "fsr_v3", "label": "FidelityFX FSR 3.1.4", "algorithm": "fsr", "fsr_version": "V3", "hardware_optional": true},
+      {"id": "xess", "label": "XeSS", "algorithm": "xess", "hardware_optional": true},
+      {"id": "dlss", "label": "DLSS", "algorithm": "dlss", "hardware_optional": true}
     ]
   },
   "window": {"width": 960, "height": 540},
