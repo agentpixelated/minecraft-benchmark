@@ -1,53 +1,81 @@
 {
-  "run_id": 32172970358,
-  "source_sha": "da2d1f093270895f61bca15d283f22e2ecb61a87",
+  "run_id": 32174026972,
+  "source_sha": "9284c22445509bc9d45f78a56e18ab7a0583cdc0",
   "windows_prepare": "success",
   "linux_runtime": "success",
   "matrix": {
     "mode": "super_resolution",
-    "total_configs": 42,
+    "total_configs": 47,
     "backend": "opengl",
     "shard_index": 0,
     "shard_count": 1,
-    "shard_configs": 7,
+    "shard_configs": 9,
     "note": "Dedicated SR profiles are kept outside the OpenGL/Vulkan optimization-mod powerset because the MC 26.2 SR build disables upscaling on Vulkan."
   },
   "invalid_runs": 0,
   "profiles": {
     "sr_native": {
-      "fps": 17.102573333333336,
+      "fps": 19.852513333333334,
+      "render_scale": 1.0,
+      "profile_kind": "super_resolution",
       "vs_native_pct": 0.0,
-      "render_scale": 1.0
+      "vs_raw_scale_pct": 0.3675126130234352
     },
     "sr_mod_disabled": {
-      "fps": 19.00771,
-      "vs_native_pct": 11.139473747810257,
-      "render_scale": 1.0
+      "fps": 19.05582,
+      "render_scale": 1.0,
+      "profile_kind": "super_resolution",
+      "vs_native_pct": -4.013060311087402,
+      "vs_raw_scale_pct": -3.6602962008754347
+    },
+    "renderscale_rs100": {
+      "fps": 19.77982,
+      "render_scale": 1.0,
+      "profile_kind": "raw_render_scale",
+      "vs_native_pct": -0.3661669034684789,
+      "vs_raw_scale_pct": 0.0
+    },
+    "renderscale_rs75": {
+      "fps": 21.795096666666666,
+      "render_scale": 0.75,
+      "profile_kind": "raw_render_scale",
+      "vs_native_pct": 9.78507507193882,
+      "vs_raw_scale_pct": 0.0
+    },
+    "renderscale_rs50": {
+      "fps": 25.031143333333333,
+      "render_scale": 0.5,
+      "profile_kind": "raw_render_scale",
+      "vs_native_pct": 26.08551327002424,
+      "vs_raw_scale_pct": 0.0
     },
     "sr_fsr1_rs100": {
-      "fps": 20.005750000000003,
-      "vs_native_pct": 16.975086790058104,
-      "render_scale": 1.0
+      "fps": 20.032303333333335,
+      "render_scale": 1.0,
+      "profile_kind": "super_resolution",
+      "vs_native_pct": 0.9056284057400665,
+      "vs_raw_scale_pct": 1.2764693173817232
     },
     "sr_fsr1_rs75": {
-      "fps": 18.47191666666667,
-      "vs_native_pct": 8.006650850983043,
-      "render_scale": 0.75
-    },
-    "sr_fsr1_quality": {
-      "fps": 19.66277,
-      "vs_native_pct": 14.96965758759108,
-      "render_scale": 0.6666666667
+      "fps": 19.2485,
+      "render_scale": 0.75,
+      "profile_kind": "super_resolution",
+      "vs_native_pct": -3.0425030986840684,
+      "vs_raw_scale_pct": -11.684264151768687
     },
     "sr_fsr1_performance": {
-      "fps": 17.732746666666667,
-      "vs_native_pct": 3.684669675440655,
-      "render_scale": 0.5
+      "fps": 20.75807,
+      "render_scale": 0.5,
+      "profile_kind": "super_resolution",
+      "vs_native_pct": 4.561420770569091,
+      "vs_raw_scale_pct": -17.07102738548498
     },
     "sr_sgsr1_quality": {
-      "fps": 19.79256666666667,
-      "vs_native_pct": 15.72858821245613,
-      "render_scale": 0.6666666667
+      "fps": 20.67323,
+      "render_scale": 0.6666666667,
+      "profile_kind": "super_resolution",
+      "vs_native_pct": 4.134069338659718,
+      "vs_raw_scale_pct": null
     }
   },
   "status": "success"
