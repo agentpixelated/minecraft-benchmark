@@ -1,5 +1,5 @@
 name: Temporary Actions status probe
-# refresh 4
+# refresh 5
 
 on:
   push:
@@ -27,7 +27,7 @@ jobs:
           names=['multisuite-validation.yml','exhaustive-powerset.yml','integration-smoke.yml']
           out={}
           for name in names:
-              cp=subprocess.run(['gh','run','list','--workflow',name,'--limit','5','--json','databaseId,status,conclusion,headSha,createdAt'],capture_output=True,text=True)
+              cp=subprocess.run(['gh','run','list','--workflow',name,'--limit','6','--json','databaseId,status,conclusion,headSha,createdAt'],capture_output=True,text=True)
               out[name]=json.loads(cp.stdout or '[]') if cp.returncode==0 else {'error':cp.stderr}
           open('ci/actions-live.json','w').write(json.dumps(out,indent=2)+'\n')
           print(json.dumps(out,indent=2))
