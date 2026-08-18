@@ -1,0 +1,46 @@
+name: AI agent smoke test
+
+on:
+  push:
+    paths:
+      - 'run-agent.py'
+      - 'AGENTS.md'
+      - 'mcbench/**'
+      - 'objectbench/**'
+      - 'benchmark-config.json'
+      - '.github/workflows/agent-smoke.yml'
+  workflow_dispatch:
+
+jobs:
+  agent-headless:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install graphics runtime
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb mesa-vulkan-drivers libvulkan1
+      - name: Run through AI-agent entrypoint
+        env:
+          AI_AGENT_NAME: github-actions-agent
+        run: python3 run-agent.py --quick --configs sodium,sodium_full --accept-eula --no-auto-system-deps
+      - name: Verify machine-readable result
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('agent-result.json'))
+          assert d['status']=='success', d
+          assert d['invalid_runs']==0, d
+          assert d['valid_runs']==4, d
+          print(json.dumps({k:d[k] for k in ('status','agent','valid_runs','invalid_runs','summary')},indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai-agent-smoke-results
+          path: |
+            agent-result.json
+            results/
+          if-no-files-found: ignore
+          retention-days: 3
