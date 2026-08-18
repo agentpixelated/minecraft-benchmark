@@ -18,10 +18,10 @@ jobs:
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
-      - name: Static validation
+      - name: Static validation through the real launcher
         run: |
           python3 -m compileall -q benchmark.py run-agent.py mcbench tools
-          python3 benchmark.py --self-test
+          ./run-linux.sh --self-test
           python3 run-agent.py --self-test --json-out agent-self-test.json
           cat agent-self-test.json
       - name: Install graphics runtime
@@ -95,7 +95,7 @@ jobs:
           retention-days: 7
 
   merge:
-    if: always()
+    if: always() && needs.gate.result == 'success'
     needs: [gate, shard]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
