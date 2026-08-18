@@ -1,0 +1,32 @@
+name: Temporary integration live status
+
+on:
+  push:
+    paths:
+      - '.github/workflows/_integration-live.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Record latest integration run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p ci
+          gh run list --workflow integration-smoke.yml --limit 1 --json databaseId,status,conclusion,createdAt,headSha > ci/integration-smoke-live.json
+          cat ci/integration-smoke-live.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git pull --rebase
+          git add ci/integration-smoke-live.json
+          git commit -m 'Record temporary integration live status' || true
+          git push
