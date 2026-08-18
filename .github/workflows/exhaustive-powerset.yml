@@ -12,8 +12,33 @@ permissions:
 env:
   SHARD_COUNT: '64'
 
+concurrency:
+  group: exhaustive-powerset-screening
+  cancel-in-progress: true
+
 jobs:
+  announce:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Record live exhaustive run ID
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          mkdir -p ci
+          printf '{"run_id":%s,"source_sha":"%s","status":"started","target_configs":256,"target_runs":512}\n' "$RUN_ID" "$SOURCE_SHA" > ci/exhaustive-live.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git pull --rebase
+          git add ci/exhaustive-live.json
+          git commit -m 'Record exhaustive screening run ID' || true
+          git push
+
   gate:
+    needs: announce
     runs-on: ubuntu-24.04
     timeout-minutes: 35
     steps:
@@ -116,6 +141,7 @@ jobs:
           SOURCE_SHA: ${{ github.sha }}
           GATE_RESULT: ${{ needs.gate.result }}
           SHARD_RESULT: ${{ needs.shard.result }}
+          RUN_ID: ${{ github.run_id }}
         run: |
           mkdir -p benchmark-results/exhaustive-latest ci
           cp exhaustive-results/summary.json benchmark-results/exhaustive-latest/summary.json
@@ -124,16 +150,17 @@ jobs:
           python3 - <<'PY'
           import json, os
           d=json.load(open('exhaustive-results/summary.json'))
-          status={'source_sha':os.environ['SOURCE_SHA'],'gate':os.environ['GATE_RESULT'],'matrix_job':os.environ['SHARD_RESULT'],
+          status={'run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],'gate':os.environ['GATE_RESULT'],'matrix_job':os.environ['SHARD_RESULT'],
                   'configs':len(d['aggregate']['configs']),'target_configs':d['matrix']['total_configs'],'raw_runs':len(d['raw_runs']),
                   'invalid_runs':len(d['aggregate']['invalid_runs']),'shards_merged':d['shards']}
           open('ci/exhaustive-status.json','w').write(json.dumps(status,indent=2)+'\n')
+          open('ci/exhaustive-live.json','w').write(json.dumps({**status,'status':'completed'},indent=2)+'\n')
           print(json.dumps(status,indent=2))
           PY
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git pull --rebase
-          git add benchmark-results/exhaustive-latest ci/exhaustive-status.json
+          git add benchmark-results/exhaustive-latest ci/exhaustive-status.json ci/exhaustive-live.json
           git commit -m 'Record exhaustive 256-stack screening result' || true
           git push
       - uses: actions/upload-artifact@v4
