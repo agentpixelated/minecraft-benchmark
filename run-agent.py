@@ -88,18 +88,22 @@ def self_test(out: Path) -> int:
         cfg=json.loads((ROOT/"benchmark-config.json").read_text(encoding="utf-8")); ids={c["id"] for c in cfg["configs"]}
         assert {"sodium","sodium_full"}.issubset(ids)
         assert len(cfg.get("suites",{}))==9 and len(cfg.get("optional_mods",[]))==8
-        assert "super_resolution" in cfg["suites"] and len(cfg.get("super_resolution_benchmark",{}).get("profiles",[]))>=3
+        spec=cfg.get("super_resolution_benchmark",{})
+        assert "super_resolution" in cfg["suites"] and spec.get("render_scale_mod")=="renderscale"
+        scales=len(spec.get("render_scales",[])); algorithms=len(spec.get("algorithms",[]))
+        sr_family_profiles=2 + scales + scales*algorithms
+        assert sr_family_profiles >= 7
         assert (ROOT/"run-linux.sh").exists() and (ROOT/"run-windows.ps1").exists()
         compile((ROOT/"run-agent.py").read_text(encoding="utf-8"),"run-agent.py","exec")
         payload.update({"status":"self-test-ok","configs":len(cfg["configs"]),"suites":len(cfg["suites"]),"exhaustive_combinations":2**len(cfg["optional_mods"]),
-                        "super_resolution_profiles":1+len(cfg["super_resolution_benchmark"]["profiles"])})
+                        "render_scales":scales,"super_resolution_algorithms":algorithms,"super_resolution_profiles":sr_family_profiles})
         write_json(out,payload); print("AGENT SELF-TEST OK"); return 0
     except Exception as exc:
         payload.update({"status":"self-test-failed","error":repr(exc)}); write_json(out,payload); print("AGENT SELF-TEST FAILED:",exc,file=sys.stderr); return 1
 
 
 def main() -> int:
-    ap=argparse.ArgumentParser(description="AI-agent/headless entrypoint for MCBench multi-suite OpenGL/Vulkan and Super Resolution benchmarks")
+    ap=argparse.ArgumentParser(description="AI-agent/headless entrypoint for MCBench multi-suite OpenGL/Vulkan and Render Scale + Super Resolution benchmarks")
     ap.add_argument("--quick",action="store_true"); ap.add_argument("--configs"); ap.add_argument("--backend",choices=["both","opengl","vulkan"],default="both")
     ap.add_argument("--all-combinations",action="store_true"); ap.add_argument("--super-resolution",action="store_true")
     ap.add_argument("--shard-index",type=int,default=0); ap.add_argument("--shard-count",type=int,default=1)
