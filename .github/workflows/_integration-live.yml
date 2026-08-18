@@ -30,3 +30,4 @@ jobs:
           git add ci/integration-smoke-live.json
           git commit -m 'Record temporary integration live status' || true
           git push
+          # probe 2
