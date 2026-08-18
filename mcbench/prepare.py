@@ -82,24 +82,27 @@ def resolve_and_download_mods(cfg: dict[str, Any], force: bool = False) -> dict[
         project, version = resolve_modrinth_project(slug_or_id, mc)
         pid = project["id"]
         groups.setdefault(root_slug, [])
-        if pid not in groups[root_slug]:
+        already_in_root = pid in groups[root_slug]
+        if not already_in_root:
             groups[root_slug].append(pid)
         if pid in projects:
+            if already_in_root:
+                return
+            for dep_id in projects[pid].get("required_project_ids", []):
+                add(dep_id, root_slug)
             return
         file = next((f for f in version["files"] if f.get("primary")), version["files"][0])
         dst = MOD_CACHE / file["filename"]
         if force or not dst.exists():
             log(f"[mods] {project['slug']} {version['version_number']}")
             download(file["url"], dst)
+        required_ids = [d["project_id"] for d in version.get("dependencies", [])
+                        if d.get("dependency_type") == "required" and d.get("project_id")]
         projects[pid] = {"project_id": pid, "slug": project["slug"], "title": project.get("title", project["slug"]),
                          "version_id": version["id"], "version": version["version_number"], "file": file["filename"],
-                         "sha512": file.get("hashes", {}).get("sha512")}
-        for dep in version.get("dependencies", []):
-            if dep.get("dependency_type") == "required" and dep.get("project_id"):
-                dep_project = request_json("https://api.modrinth.com/v2/project/" + dep["project_id"])
-                add(dep_project["slug"], root_slug)
-                if dep_project["id"] not in groups[root_slug]:
-                    groups[root_slug].append(dep_project["id"])
+                         "sha512": file.get("hashes", {}).get("sha512"), "required_project_ids": required_ids}
+        for dep_id in required_ids:
+            add(dep_id, root_slug)
 
     for slug in requested:
         add(slug, slug)
