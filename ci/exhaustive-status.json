@@ -1,0 +1,10 @@
+{
+  "source_sha": "0f81a378c0fb719e09e4a90f062f6acb3feb0417",
+  "gate": "success",
+  "matrix_job": "cancelled",
+  "configs": 176,
+  "target_configs": 256,
+  "raw_runs": 352,
+  "invalid_runs": 0,
+  "shards_merged": 44
+}
