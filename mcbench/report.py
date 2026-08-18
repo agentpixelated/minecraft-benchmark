@@ -25,7 +25,8 @@ def aggregate(rows: list[dict[str, Any]], cfg: dict[str, Any]) -> dict[str, Any]
     good=[r for r in rows if "overall" in r and r.get("backend_proven")]
     result={"configs":{},"invalid_runs":[r for r in rows if r not in good]}
     for c in cfg["configs"]:
-        cid=c["id"]; entry={"label":c["label"],"mods":list(c.get("mods",[])),"backends":{},"comparison":{}}
+        cid=c["id"]; entry={"label":c["label"],"mods":list(c.get("mods",[])),"benchmark_family":c.get("benchmark_family"),
+                             "super_resolution":c.get("super_resolution"),"backends":{},"comparison":{}}
         for backend in ["opengl","vulkan"]:
             rs=[r for r in good if r["config"]==cid and r["backend"]==backend]; be={"valid_runs":len(rs),"scenes":{}}
             for scene in SCENES:
@@ -41,6 +42,8 @@ def aggregate(rows: list[dict[str, Any]], cfg: dict[str, Any]) -> dict[str, Any]
             rss=[r.get("process_metrics",{}).get("peak_rss_mb") for r in rs]
             rss=[float(x) for x in rss if isinstance(x,(int,float)) and x>0]
             if rss: be["process_metrics"]={"peak_rss_mb":statistics.fmean(rss),"rss_range_mb":[min(rss),max(rss)]}
+            sr_runs=[r.get("super_resolution") for r in rs if r.get("super_resolution")]
+            if sr_runs: be["super_resolution_proof"]=sr_runs
             entry["backends"][backend]=be
         for scene in SCENES:
             try:
@@ -75,6 +78,19 @@ def build_suite_results(agg: dict[str,Any], cfg: dict[str,Any]) -> dict[str,Any]
             if kind=="planned":
                 suites[sid]={"status":"planned","opengl":None,"vulkan":None,"delta_pct":None}
                 continue
+            if kind=="special_super_resolution":
+                sr=entry.get("super_resolution")
+                if entry.get("benchmark_family")!="super_resolution" or not sr:
+                    suites[sid]={"status":"not_applicable","opengl":None,"vulkan":None,"delta_pct":None}
+                    continue
+                scenes=list(sdef.get("scenes",[])); primary=sdef.get("primary_metric","mean_fps")
+                o=_mean_scene_metric(entry,"opengl",scenes,primary)
+                suites[sid]={"status":"measured" if o is not None else "missing","unit":"FPS","higher_is_better":True,
+                    "primary_metric":primary,"opengl":o,"vulkan":None,"delta_pct":None,"scenes":scenes,
+                    "profile":sr,"supporting":{
+                        "opengl_1pct_low":_mean_scene_metric(entry,"opengl",scenes,"one_percent_low_fps"),
+                        "opengl_p99_ms":_mean_scene_metric(entry,"opengl",scenes,"p99_frame_ms")}}
+                continue
             if kind=="process_rss":
                 def rss(backend: str):
                     try: return float(entry["backends"][backend]["process_metrics"]["peak_rss_mb"])
@@ -92,9 +108,17 @@ def build_suite_results(agg: dict[str,Any], cfg: dict[str,Any]) -> dict[str,Any]
                     "opengl_1pct_low":_mean_scene_metric(entry,"opengl",scenes,"one_percent_low_fps"),
                     "vulkan_1pct_low":_mean_scene_metric(entry,"vulkan",scenes,"one_percent_low_fps"),
                     "opengl_p99_ms":_mean_scene_metric(entry,"opengl",scenes,"p99_frame_ms"),
-                    "vulkan_p99_ms":_mean_scene_metric(entry,"vulkan",scenes,"p99_frame_ms"),
-                }}
+                    "vulkan_p99_ms":_mean_scene_metric(entry,"vulkan",scenes,"p99_frame_ms")}}
         out["configs"][cid]={"label":entry.get("label",cid),"mods":entry.get("mods",[]),"suites":suites}
+
+    # Super Resolution has an OpenGL native baseline rather than a Vulkan peer.
+    try: native=out["configs"]["sr_native"]["suites"]["super_resolution"]["opengl"]
+    except (KeyError,TypeError): native=None
+    if native:
+        for cid,item in out["configs"].items():
+            sr=item["suites"].get("super_resolution")
+            if not sr or sr.get("status")!="measured" or sr.get("opengl") is None: continue
+            sr["vs_native_pct"]=(float(sr["opengl"])/float(native)-1)*100
     return out
 
 
@@ -106,12 +130,27 @@ def write_report(run_dir: Path, summary: dict[str, Any], cfg: dict[str, Any]) ->
             for scene,c in e["comparison"].items():
                 if "opengl_fps" not in c: continue
                 w.writerow([cid,e["label"],scene,c["opengl_fps"],c["vulkan_fps"],c["vulkan_vs_opengl_pct"],c["opengl_1pct_low"],c["vulkan_1pct_low"],c["opengl_p99_ms"],c["vulkan_p99_ms"]])
-    lines=["# Sodium OpenGL vs Vulkan multi-suite benchmark","",f"- Minecraft: **{cfg['minecraft_version']}**",f"- Repetitions/backend: **{cfg['benchmark']['repeats_per_backend']}**",f"- Resolution: **{cfg['window']['width']}×{cfg['window']['height']}**",f"- Render distance: **{cfg['video']['render_distance']}**","","## Overall frametime comparison","","| Stack | OpenGL FPS | Vulkan FPS | Vulkan vs OpenGL | OpenGL 1% low | Vulkan 1% low |","|---|---:|---:|---:|---:|---:|"]
-    rows=[]
-    for _,e in summary["aggregate"]["configs"].items():
-        c=e["comparison"].get("overall")
-        if c: rows.append((max(c["opengl_fps"],c["vulkan_fps"]),e["label"],c))
-    for _,label,c in sorted(rows,reverse=True): lines.append(f"| {label} | {c['opengl_fps']:.2f} | {c['vulkan_fps']:.2f} | {c['vulkan_vs_opengl_pct']:+.2f}% | {c['opengl_1pct_low']:.2f} | {c['vulkan_1pct_low']:.2f} |")
-    lines += ["","## Suites","","Renderer/FPS, Particle, Block Entity, Chunk Generation (streaming proxy), Lighting, Memory, Network (loopback update stress), and a reserved Save/Quit schema slot are stored in `suite_results`.","","## Method","","- Same machine and same resolved mod JARs for both backends.","- Programmatic camera/player path and isolated game directory.","- World reset and Minecraft process-tree cleanup between runs.","- Backend accepted only when Sodium explicitly logs it.","- Peak process-tree RSS sampled by the Python harness.","- Save/Quit is intentionally not fabricated from forced cleanup; it remains marked `planned` until graceful timing is implemented.","","See `summary.json` for per-suite/per-scene metrics and diagnostics."]
+
+    if summary.get("matrix",{}).get("mode")=="super_resolution":
+        lines=["# Sodium OpenGL Super Resolution benchmark","",f"- Minecraft: **{cfg['minecraft_version']}**",f"- Repetitions/profile: **{cfg['benchmark']['repeats_per_backend']}**",f"- Output resolution: **{cfg['window']['width']}×{cfg['window']['height']}**","",
+               "## Super Resolution profiles","","| Profile | Render scale | Mean FPS | vs native | 1% low | P99 ms |","|---|---:|---:|---:|---:|---:|"]
+        sr_cfg=summary.get("suite_results",{}).get("configs",{})
+        for cid,item in sr_cfg.items():
+            sr=item.get("suites",{}).get("super_resolution",{}); profile=sr.get("profile") or {}
+            if sr.get("status")!="measured":
+                lines.append(f"| {item.get('label',cid)} | — | INVALID / unsupported | — | — | — |")
+                continue
+            scale=profile.get("render_scale"); scale_txt=f"{float(scale)*100:.1f}%" if isinstance(scale,(int,float)) else "—"
+            one=sr.get("supporting",{}).get("opengl_1pct_low"); p99=sr.get("supporting",{}).get("opengl_p99_ms"); delta=sr.get("vs_native_pct")
+            lines.append(f"| {item.get('label',cid)} | {scale_txt} | {sr.get('opengl',0):.2f} | {delta:+.2f}% | {one:.2f} | {p99:.2f} |" if one is not None and p99 is not None and delta is not None else f"| {item.get('label',cid)} | {scale_txt} | {sr.get('opengl',0):.2f} | — | — | — |")
+        lines += ["","## Method","","- OpenGL only: the Minecraft 26.2 Super Resolution build disables upscaling on Minecraft's native Vulkan backend.","- `sr_native` is Sodium OpenGL without the Super Resolution mod.","- `sr_mod_disabled` measures the overhead of having the mod loaded with upscaling disabled.","- Each enabled profile writes the upstream `config/super_resolution/config.toml` before launch and requires algorithm-initialization proof in the log.","- Hardware-specific profiles may be marked invalid/unsupported rather than silently falling back.","","See `summary.json` for per-scene frametime metrics, profile metadata, and proof fields."]
+    else:
+        lines=["# Sodium OpenGL vs Vulkan multi-suite benchmark","",f"- Minecraft: **{cfg['minecraft_version']}**",f"- Repetitions/backend: **{cfg['benchmark']['repeats_per_backend']}**",f"- Resolution: **{cfg['window']['width']}×{cfg['window']['height']}**",f"- Render distance: **{cfg['video']['render_distance']}**","","## Overall frametime comparison","","| Stack | OpenGL FPS | Vulkan FPS | Vulkan vs OpenGL | OpenGL 1% low | Vulkan 1% low |","|---|---:|---:|---:|---:|---:|"]
+        rows=[]
+        for _,e in summary["aggregate"]["configs"].items():
+            c=e["comparison"].get("overall")
+            if c: rows.append((max(c["opengl_fps"],c["vulkan_fps"]),e["label"],c))
+        for _,label,c in sorted(rows,reverse=True): lines.append(f"| {label} | {c['opengl_fps']:.2f} | {c['vulkan_fps']:.2f} | {c['vulkan_vs_opengl_pct']:+.2f}% | {c['opengl_1pct_low']:.2f} | {c['vulkan_1pct_low']:.2f} |")
+        lines += ["","## Suites","","Renderer/FPS, Particle, Block Entity, Chunk Generation (streaming proxy), Lighting, Memory, Network (loopback update stress), Super Resolution (dedicated OpenGL mode), and a reserved Save/Quit schema slot are stored in `suite_results`.","","## Method","","- Same machine and same resolved mod JARs for both backends.","- Programmatic camera/player path and isolated game directory.","- World reset and Minecraft process-tree cleanup between runs.","- Backend accepted only when Sodium explicitly logs it.","- Peak process-tree RSS sampled by the Python harness.","- Save/Quit is intentionally not fabricated from forced cleanup; it remains marked `planned` until graceful timing is implemented.","","See `summary.json` for per-suite/per-scene metrics and diagnostics."]
     (run_dir/"REPORT.md").write_text("\n".join(lines)+"\n",encoding="utf-8"); RESULTS.mkdir(exist_ok=True)
     shutil.copy2(run_dir/"REPORT.md",RESULTS/"latest-report.md"); shutil.copy2(run_dir/"summary.json",RESULTS/"latest-summary.json"); shutil.copy2(csv_path,RESULTS/"latest-summary.csv")
