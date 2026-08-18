@@ -1,15 +1,21 @@
 # Minecraft Sodium OpenGL vs Vulkan Benchmark
 
-A local, repeatable Minecraft Fabric benchmark for comparing the **same Sodium + mod configuration** on:
+A repeatable Minecraft Fabric benchmark for comparing the **same Sodium + mod configuration** on:
 
 - Sodium **OpenGL**
 - Sodium **native Vulkan**
 
-The benchmark targets Minecraft **26.2** and runs on the user's real Windows or Linux hardware. It uses an isolated benchmark installation under `.mcbench/`; it does **not** modify the normal `.minecraft` installation.
+The benchmark targets Minecraft **26.2** and supports three execution paths:
 
-## One-click run
+1. **Windows** local/physical hardware
+2. **Linux** local/physical hardware
+3. **AI agent / headless** environments, including coding agents and CI VMs
 
-### Windows
+All modes use the same benchmark core, ObjectBench world, mod resolver, graphics settings, backend proof, metrics, and report format. The isolated game installation lives under `.mcbench/`; the normal `.minecraft` installation is not modified.
+
+## Run
+
+### Windows — one click
 
 Clone/download the repository, then double-click:
 
@@ -17,19 +23,33 @@ Clone/download the repository, then double-click:
 run-windows.bat
 ```
 
-### Linux
-
-After cloning the repository:
+### Linux — one command
 
 ```bash
 ./run-linux.sh
 ```
 
-`run-linux.sh` is committed as executable. The launchers bootstrap `uv`, Python, PortableMC, and Java 25 when required. On the first run they ask you to accept the Minecraft EULA before creating the local benchmark world.
+`run-linux.sh` is committed executable.
 
-## What is benchmarked
+### AI agent / headless
 
-Every selected mod stack is run on both backends. The default matrix contains 14 stacks:
+```bash
+AI_AGENT_NAME="chatgpt" python3 run-agent.py --accept-eula
+```
+
+Quick functional benchmark:
+
+```bash
+AI_AGENT_NAME="chatgpt" python3 run-agent.py --quick --configs sodium,sodium_full --accept-eula
+```
+
+Agent mode is non-interactive and writes `agent-result.json` in addition to the normal benchmark report. On headless Debian-family Linux it can provision Xvfb + Mesa Vulkan automatically when root/passwordless sudo is available. See [`AGENTS.md`](AGENTS.md) for the machine contract.
+
+The Windows/Linux launchers bootstrap `uv`, Python, PortableMC, and Java 25 when required. Agent mode delegates to those same launchers rather than implementing a separate benchmark path.
+
+## Default mod matrix
+
+Every selected stack is tested on both OpenGL and Vulkan. The current default matrix contains 14 stacks:
 
 - Sodium only
 - + ImmediatelyFast
@@ -46,34 +66,34 @@ Every selected mod stack is run on both backends. The default matrix contains 14
 - Full stack without C2ME
 - Full stack
 
-The exact compatible Modrinth versions and their required dependency closure are resolved once per benchmark session and written to `resolved-mods.json`, so OpenGL and Vulkan use the exact same JAR set inside each comparison.
+Exact compatible Modrinth versions and required dependency closures are resolved once per benchmark session and written to `resolved-mods.json`, so the OpenGL and Vulkan sides use identical JAR sets.
 
 > C2ME is included for completeness, but steady-state FPS is not the correct primary metric for C2ME. Chunk generation/loading should be benchmarked separately.
 
-## Benchmark scenes
+## ObjectBench scenes
 
-ObjectBench uses three deterministic scenes:
+ObjectBench currently uses three deterministic steady-state scenes:
 
 1. **Geometry + transparency** — leaves, glass, fences, bars, walls, stairs, trapdoors.
 2. **Occlusion + entities** — opaque occluders, hidden no-AI entities, and block entities.
-3. **Mixed block entities** — visible transparent/non-cubic geometry, barrels, and no-AI entities.
+3. **Mixed block entities** — visible transparent/non-cubic geometry, block entities, and no-AI entities.
 
-The benchmark client mod controls player position and camera directly. There is no mouse/keyboard automation. Benchmark chunks are generated before FPS measurement, time/weather/random ticks are frozen, and the world is reset before every run.
+The client benchmark mod controls player position and camera directly. There is no mouse/keyboard automation. Benchmark chunks are generated before FPS measurement, time/weather/random ticks are frozen, and the pristine world template is restored before every run.
 
 ## Standard methodology
 
-Default mode uses **2 repetitions per backend**. With the default 14-stack matrix this is 56 Minecraft launches. For each mod stack the backend order is balanced (ABBA or BAAB depending on stack index) to reduce time/order drift.
+Default mode uses **2 repetitions per backend**. With the current 14-stack matrix this is 56 Minecraft launches. Backend order is balanced ABBA/BAAB by stack to reduce order drift.
 
 Each run has:
 
-- initial stabilization period
+- initial stabilization
 - per-scene warmup
-- per-scene measurement window
+- per-scene measurement
 - backend verification from Sodium's own log
-- pristine world reset between runs
-- isolated Minecraft process tree and hard cleanup between runs
+- pristine world reset
+- isolated Minecraft process tree and hard cleanup
 
-Metrics:
+Metrics include:
 
 - average FPS
 - median FPS
@@ -83,11 +103,9 @@ Metrics:
 - per-scene metrics
 - Vulkan vs OpenGL percentage
 
-A Vulkan run is accepted only if Sodium explicitly reports the Vulkan backend. A failed Vulkan initialization or OpenGL fallback is recorded as invalid rather than counted as a Vulkan result.
+A Vulkan result is accepted only when Sodium explicitly reports the Vulkan backend. Failed Vulkan initialization or OpenGL fallback is recorded as **invalid**, never silently counted as Vulkan.
 
 ## Quick mode
-
-For a faster smoke test:
 
 Windows:
 
@@ -101,26 +119,27 @@ Linux:
 ./run-linux.sh --quick
 ```
 
+AI agent:
+
+```bash
+python3 run-agent.py --quick --configs sodium,sodium_full --accept-eula
+```
+
 Quick mode uses one repetition per backend and shorter sampling. Use standard mode for performance conclusions.
 
-## Run only selected stacks
+## Selected stacks / backend diagnostics
 
 ```bash
 ./run-linux.sh --configs sodium,sodium_immediatelyfast,sodium_if_lithium
-```
-
-On Windows the same arguments can be passed to `run-windows.bat`.
-
-Backend-only diagnostics are also available:
-
-```bash
 ./run-linux.sh --backend opengl --configs sodium
 ./run-linux.sh --backend vulkan --configs sodium
 ```
 
+The same benchmark arguments can be passed through `run-windows.bat` or `run-agent.py`.
+
 ## Output
 
-Each benchmark creates a timestamped directory:
+Each benchmark creates:
 
 ```text
 results/20260818-210000/
@@ -136,13 +155,25 @@ results/20260818-210000/
 
 Convenience copies are also written to `results/latest-report.md`, `results/latest-summary.json`, and `results/latest-summary.csv`.
 
+AI-agent mode additionally writes:
+
+```text
+agent-result.json
+```
+
+A fully successful agent run must contain:
+
+```json
+{"status":"success","invalid_runs":0}
+```
+
 ## Configuration
 
-Edit `benchmark-config.json` to change resolution, render distance, sample duration, repetitions, or the mod matrix. Both backends inherit the same settings for a given benchmark session.
+Edit `benchmark-config.json` to change resolution, render distance, sample duration, repetitions, or the mod matrix. Both graphics backends inherit the same settings for a session.
 
 ## Optional Modrinth token
 
-Public Modrinth search/version resolution works without authentication. If you still want authenticated Modrinth API requests, set a personal token through the `MODRINTH_TOKEN` environment variable before launching the benchmark.
+Public Modrinth resolution works without authentication. To use authenticated Modrinth API requests, set `MODRINTH_TOKEN` in the environment before launching.
 
 Windows PowerShell:
 
@@ -151,28 +182,39 @@ $env:MODRINTH_TOKEN = "mrp_your_token_here"
 .\run-windows.ps1
 ```
 
-Linux / AI agent:
+Linux:
 
 ```bash
 export MODRINTH_TOKEN='mrp_your_token_here'
 ./run-linux.sh
 ```
 
-The token is attached only to requests sent to `api.modrinth.com`. It is not sent to Modrinth CDN/download URLs, is never written to the benchmark reports, and should never be committed to this repository. For CI/agents, inject it through the platform's secret/environment-variable system.
+AI agent:
+
+```bash
+export MODRINTH_TOKEN='mrp_your_token_here'
+python3 run-agent.py --accept-eula
+```
+
+The token is attached only to requests sent to `api.modrinth.com`, is not sent to download/CDN hosts, and is not written to benchmark reports. Do not commit it to the repository.
 
 ## Validation
 
-The repository includes permanent cross-platform CI checks. During development the complete user-facing launch path was also exercised in virtual machines:
+Permanent integration CI covers all three supported paths:
 
-- **Windows:** the PowerShell launcher successfully installed/prepared Minecraft 26.2, Fabric, Java, the complete mod matrix, ObjectBench, and the controlled benchmark world.
-- **Linux:** the executable shell launcher successfully ran real Minecraft quick benchmarks for both Sodium OpenGL and Sodium Vulkan, including Sodium-only and the full mod stack. All four renderer runs produced benchmark JSON with backend verification and no invalid run.
+- **Windows:** full benchmark environment preparation through the Windows launcher.
+- **Linux:** real quick OpenGL + Vulkan benchmark through the Linux launcher.
+- **AI agent:** real headless quick OpenGL + Vulkan benchmark through `run-agent.py`, plus validation of `agent-result.json`.
 
-These CI machines use virtual/software graphics, so their FPS values are only functional validation. Performance conclusions should come from running the benchmark on the target physical GPU.
+The latest machine-readable three-platform CI status is written to `ci/integration-smoke.json`.
+
+CI/agent VMs may use virtual/software graphics; their FPS is functional validation only. Performance conclusions should come from the target physical GPU.
 
 ## Requirements and notes
 
 - Internet access is required on the first run.
-- A Vulkan-capable driver is required for Sodium Vulkan.
-- Close other games, renderers, recording software, and heavy background tasks before running.
-- Do not compare results from different machines as if they were controlled A/B tests. The primary purpose is **OpenGL vs Vulkan and mod-stack comparisons on the same hardware**.
-- The scripts use an offline benchmark username and only local singleplayer worlds.
+- A Vulkan-capable driver is required for physical Vulkan benchmarking.
+- Close other games, renderers, recording software, and heavy background tasks before benchmarking.
+- Do not compare absolute FPS from different machines as a controlled A/B test.
+- The primary comparison is **OpenGL vs Vulkan and mod-stack differences on the same hardware**.
+- The scripts use an offline benchmark username and local singleplayer worlds only.
