@@ -1,0 +1,143 @@
+name: Exhaustive 256-stack powerset screening
+
+on:
+  push:
+    paths:
+      - '.github/workflows/exhaustive-powerset.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  SHARD_COUNT: '64'
+
+jobs:
+  gate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static validation
+        run: |
+          python3 -m compileall -q benchmark.py run-agent.py mcbench tools
+          python3 benchmark.py --self-test
+          python3 run-agent.py --self-test --json-out agent-self-test.json
+          cat agent-self-test.json
+      - name: Install graphics runtime
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb mesa-vulkan-drivers libvulkan1
+      - name: Runtime gate — Sodium OpenGL and Vulkan across all v5 suites
+        env:
+          MC_EULA_ACCEPTED: '1'
+        run: xvfb-run -a ./run-linux.sh --quick --configs sodium --accept-eula
+      - name: Verify runtime gate
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('results/latest-summary.json'))
+          assert d['schema']==2
+          assert len(d['raw_runs'])==2 and all(r.get('backend_proven') for r in d['raw_runs'])
+          expected={'geometry_transparency','occlusion_entities','mixed_block_entities','particle_stress','lighting_updates','network_updates','chunk_generation'}
+          for r in d['raw_runs']:
+              assert expected <= set(r.get('scenes',{})), expected-set(r.get('scenes',{}))
+              assert r.get('process_metrics',{}).get('peak_rss_mb',0)>0
+          assert len(d['suite_results']['configs']['sodium']['suites'])==8
+          print('GATE OK')
+          PY
+
+  shard:
+    needs: gate
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        shard: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install graphics runtime
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb mesa-vulkan-drivers libvulkan1
+      - name: Run four exhaustive stacks on both backends
+        env:
+          MC_EULA_ACCEPTED: '1'
+        run: xvfb-run -a ./run-linux.sh --quick --all-combinations --shard-index ${{ matrix.shard }} --shard-count ${{ env.SHARD_COUNT }} --accept-eula
+      - name: Write shard manifest
+        if: always()
+        run: |
+          mkdir -p shard-meta
+          python3 - <<'PY'
+          import json, pathlib
+          p=pathlib.Path('results/latest-summary.json')
+          if p.exists():
+              d=json.load(p.open())
+              meta={'shard':${{ matrix.shard }},'configs':len(d.get('aggregate',{}).get('configs',{})),'runs':len(d.get('raw_runs',[])),'invalid':len(d.get('aggregate',{}).get('invalid_runs',[]))}
+          else:
+              meta={'shard':${{ matrix.shard }},'error':'no summary'}
+          pathlib.Path('shard-meta/status.json').write_text(json.dumps(meta,indent=2))
+          print(json.dumps(meta,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: powerset-shard-${{ matrix.shard }}
+          path: |
+            results/latest-summary.json
+            results/latest-summary.csv
+            results/latest-report.md
+            shard-meta/status.json
+          if-no-files-found: warn
+          retention-days: 7
+
+  merge:
+    if: always()
+    needs: [gate, shard]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: powerset-shard-*
+          path: downloaded
+      - name: Merge available shard summaries
+        run: |
+          python3 tools/merge_shards.py downloaded --out exhaustive-results
+          cat exhaustive-results/REPORT.md | head -n 80
+      - name: Record exhaustive screening result
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+          GATE_RESULT: ${{ needs.gate.result }}
+          SHARD_RESULT: ${{ needs.shard.result }}
+        run: |
+          mkdir -p benchmark-results/exhaustive-latest ci
+          cp exhaustive-results/summary.json benchmark-results/exhaustive-latest/summary.json
+          cp exhaustive-results/ranking.csv benchmark-results/exhaustive-latest/ranking.csv
+          cp exhaustive-results/REPORT.md benchmark-results/exhaustive-latest/REPORT.md
+          python3 - <<'PY'
+          import json, os
+          d=json.load(open('exhaustive-results/summary.json'))
+          status={'source_sha':os.environ['SOURCE_SHA'],'gate':os.environ['GATE_RESULT'],'matrix_job':os.environ['SHARD_RESULT'],
+                  'configs':len(d['aggregate']['configs']),'target_configs':d['matrix']['total_configs'],'raw_runs':len(d['raw_runs']),
+                  'invalid_runs':len(d['aggregate']['invalid_runs']),'shards_merged':d['shards']}
+          open('ci/exhaustive-status.json','w').write(json.dumps(status,indent=2)+'\n')
+          print(json.dumps(status,indent=2))
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git pull --rebase
+          git add benchmark-results/exhaustive-latest ci/exhaustive-status.json
+          git commit -m 'Record exhaustive 256-stack screening result' || true
+          git push
+      - uses: actions/upload-artifact@v4
+        with:
+          name: exhaustive-256-stack-results
+          path: exhaustive-results/
+          retention-days: 14
