@@ -4,7 +4,7 @@ This repository has three supported execution paths:
 
 1. Windows human/local: `run-windows.bat`
 2. Linux human/local: `./run-linux.sh`
-3. AI agent/headless: `python run-agent.py`
+3. AI agent/headless: `python3 run-agent.py`
 
 ## Rules for AI agents
 
@@ -13,33 +13,34 @@ This repository has three supported execution paths:
 - Never report a Vulkan result unless the run has `backend_proven: true`.
 - Treat any `status: invalid` row as invalid, not as zero FPS and not as an OpenGL fallback.
 - Do not compare absolute FPS from virtual/software GPUs with physical GPUs as if they were equivalent.
-- C2ME, ScalableLux, Krypton, Dynamic FPS, and similar non-steady-state optimizations need workload-specific benchmarks; do not rank them solely by ObjectBench average FPS.
+- C2ME, ScalableLux, Krypton, Dynamic FPS, FastQuit, NoisiumForked, VMP, and similar workload-specific optimizations need dedicated benchmarks; do not rank them solely by ObjectBench average FPS.
+- `sodium_bbe` should be judged especially on the `mixed_block_entities` scene, which contains BBE-relevant block entities.
 
 ## Recommended commands
 
-Functional smoke test:
+Functional smoke test of the agent contract plus the two newer optimization candidates:
 
 ```bash
-AI_AGENT_NAME="your-agent-name" python run-agent.py --quick --configs sodium,sodium_full --accept-eula
+AI_AGENT_NAME="your-agent-name" python3 run-agent.py --quick --configs sodium,sodium_badoptimizations,sodium_bbe,sodium_full --accept-eula
 ```
 
 Full benchmark:
 
 ```bash
-AI_AGENT_NAME="your-agent-name" python run-agent.py --accept-eula
+AI_AGENT_NAME="your-agent-name" python3 run-agent.py --accept-eula
 ```
 
 One backend only:
 
 ```bash
-python run-agent.py --backend opengl --configs sodium --accept-eula
-python run-agent.py --backend vulkan --configs sodium --accept-eula
+python3 run-agent.py --backend opengl --configs sodium --accept-eula
+python3 run-agent.py --backend vulkan --configs sodium --accept-eula
 ```
 
 Offline/source self-test:
 
 ```bash
-python run-agent.py --self-test
+python3 run-agent.py --self-test
 ```
 
 ## Headless Linux
@@ -55,6 +56,10 @@ This only happens when the process has root or non-interactive sudo. Disable pac
 ## EULA
 
 Agent mode is intentionally non-interactive. It will not accept the Minecraft EULA on its own. The user must explicitly authorize acceptance by passing `--accept-eula` (or setting `MC_EULA_ACCEPTED=1`) after reviewing the EULA.
+
+## Optional Modrinth token
+
+If `MODRINTH_TOKEN` exists in the agent environment, authenticated requests to `api.modrinth.com` use it automatically. Do not print, return, or commit the token.
 
 ## Machine-readable output
 
@@ -77,4 +82,4 @@ A successful benchmark must have:
 {"status":"success","invalid_runs":0}
 ```
 
-The detailed benchmark remains in the normal timestamped `results/<timestamp>/` directory.
+The detailed benchmark remains in the normal timestamped `results/<timestamp>/` directory. Permanent CI writes the latest three-platform status to `ci/integration-smoke.json`.
