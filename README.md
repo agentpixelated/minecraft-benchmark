@@ -1,35 +1,28 @@
-# Minecraft Sodium OpenGL vs Vulkan Benchmark
+# Minecraft Sodium OpenGL / Vulkan / Super Resolution Benchmark
 
-A repeatable Minecraft Fabric benchmark for comparing the **same Sodium + mod configuration** on:
+A repeatable Minecraft Fabric benchmark for comparing **Sodium + optimization-mod stacks** on OpenGL versus Minecraft's native Vulkan backend, plus a dedicated **Super Resolution** benchmark family.
 
-- Sodium **OpenGL**
-- Sodium **native Vulkan**
+Target: **Minecraft 26.2**. Supported execution paths:
 
-The benchmark targets Minecraft **26.2** and supports three execution paths:
-
-1. **Windows** local/physical hardware
-2. **Linux** local/physical hardware
+1. **Windows** local / physical hardware
+2. **Linux** local / physical hardware
 3. **AI agent / headless** environments, including coding agents and CI VMs
 
-All modes use the same benchmark core, ObjectBench world, mod resolver, graphics settings, backend proof, metrics, and report format. The isolated game installation lives under `.mcbench/`; the normal `.minecraft` installation is not modified.
+All modes use the same isolated `.mcbench/` game installation; the normal `.minecraft` directory is not modified.
 
 ## Run
 
 ### Windows — one click
 
-Clone/download the repository, then double-click:
-
 ```text
 run-windows.bat
 ```
 
-### Linux — one command
+### Linux
 
 ```bash
 ./run-linux.sh
 ```
-
-`run-linux.sh` is committed executable.
 
 ### AI agent / headless
 
@@ -37,63 +30,129 @@ run-windows.bat
 AI_AGENT_NAME="chatgpt" python3 run-agent.py --accept-eula
 ```
 
-Quick functional benchmark:
+Agent mode is non-interactive and writes `agent-result.json` in addition to the normal benchmark report. On headless Debian-family Linux it can provision Xvfb + Mesa Vulkan automatically when root/passwordless sudo is available.
+
+## Benchmark families
+
+### 1. Authored OpenGL vs Vulkan matrix
+
+The default authored matrix contains 16 representative stacks built from:
+
+- ImmediatelyFast
+- EntityCulling
+- MoreCulling
+- Lithium
+- FerriteCore
+- C2ME
+- BadOptimizations
+- Better Block Entities
+
+Every selected stack uses the exact same resolved JAR set on OpenGL and Vulkan.
+
+### 2. Exhaustive optimization-mod power set
+
+The eight optional optimization mods can be expanded into their complete power set:
 
 ```bash
-AI_AGENT_NAME="chatgpt" python3 run-agent.py --quick --configs sodium,sodium_full --accept-eula
+./run-linux.sh --quick --all-combinations --accept-eula
 ```
 
-Agent mode is non-interactive and writes `agent-result.json` in addition to the normal benchmark report. On headless Debian-family Linux it can provision Xvfb + Mesa Vulkan automatically when root/passwordless sudo is available. See [`AGENTS.md`](AGENTS.md) for the machine contract.
+Eight binary choices produce **2^8 = 256 unique stacks**. With one quick repetition on OpenGL and Vulkan this is **512 Minecraft launches**.
 
-The Windows/Linux launchers bootstrap `uv`, Python, PortableMC, and Java 25 when required. Agent mode delegates to those same launchers rather than implementing a separate benchmark path.
+The GitHub Actions exhaustive workflow shards this into 64 jobs with four stacks per shard and merges the resulting summaries into `benchmark-results/exhaustive-latest/`.
 
-## Default mod matrix
+This exhaustive CI run is a **screening benchmark** because GitHub-hosted VMs use virtual/software graphics. Close rankings should be rerun on the target physical GPU with multiple repetitions.
 
-Every selected stack is tested on both OpenGL and Vulkan. The current default matrix contains **16 stacks**:
+### 3. Super Resolution benchmark
 
-- Sodium only
-- + ImmediatelyFast
-- + EntityCulling
-- + MoreCulling
-- + Lithium
-- + FerriteCore
-- + BadOptimizations
-- + Better Block Entities
-- + C2ME
-- ImmediatelyFast + MoreCulling
-- ImmediatelyFast + Lithium
-- MoreCulling + Lithium
-- ImmediatelyFast + MoreCulling + Lithium
-- EntityCulling + MoreCulling + Lithium
-- Full stack without C2ME
-- Full stack
+Super Resolution is deliberately **not** included in the 256-stack power set. The Minecraft 26.2 Super Resolution build disables its upscaling features when Minecraft itself uses the native Vulkan backend, so duplicating every SR configuration into the Vulkan half would be redundant and misleading.
 
-Exact compatible Modrinth versions and required dependency closures are resolved once per benchmark session and written to `resolved-mods.json`, so the OpenGL and Vulkan sides use identical JAR sets.
+Run the dedicated OpenGL-only matrix instead:
 
-> C2ME is included for completeness, but steady-state FPS is not the correct primary metric for C2ME. Chunk generation/loading should be benchmarked separately.
+Windows:
 
-## ObjectBench scenes
+```text
+run-windows.bat --super-resolution
+```
 
-ObjectBench currently uses three deterministic steady-state scenes:
+Linux:
 
-1. **Geometry + transparency** — leaves, glass, fences, bars, walls, stairs, trapdoors.
-2. **Occlusion + entities** — opaque occluders, hidden no-AI entities, and block entities.
-3. **Mixed block entities** — visible transparent/non-cubic geometry, no-AI entities, plus a dense BBE-relevant set of chests, shulker boxes, decorated pots, signs, and bells.
+```bash
+./run-linux.sh --super-resolution
+```
 
-The client benchmark mod controls player position and camera directly. There is no mouse/keyboard automation. Benchmark chunks are generated before FPS measurement, time/weather/random ticks are frozen, and the pristine world template is restored before every run.
+AI agent:
 
-## Standard methodology
+```bash
+AI_AGENT_NAME="chatgpt" python3 run-agent.py --super-resolution --accept-eula
+```
 
-Default mode uses **2 repetitions per backend**. With the current 16-stack matrix this is **64 Minecraft launches**. Backend order is balanced ABBA/BAAB by stack to reduce order drift.
+Quick smoke subset:
 
-Each run has:
+```bash
+./run-linux.sh --quick --super-resolution \
+  --configs sr_native,sr_mod_disabled,sr_fsr1_quality,sr_fsr1_balanced \
+  --accept-eula
+```
+
+Current SR profiles include:
+
+- Native Sodium OpenGL baseline — no Super Resolution mod
+- Super Resolution installed but upscaling disabled — measures mod overhead
+- FSR 1 — Quality 66.7%, Balanced 58.8%, Performance 50% internal render scale
+- SGSR 1 — Quality 66.7%
+- SGSR 2 — Quality 66.7%
+- FSR 2 OpenGL — Quality 66.7%
+- FidelityFX FSR 2.3.3 — Quality 66.7%
+- FidelityFX FSR 3.1.4 — Quality 66.7%
+- XeSS — Quality 58.8%
+- DLSS — Quality 66.7%
+
+Hardware-specific algorithms are allowed to report **invalid / unsupported** rather than silently falling back. Every enabled SR result also requires an algorithm-initialization proof from the Super Resolution log.
+
+Each profile writes the upstream config at `config/super_resolution/config.toml` before launch. `upscale_ratio` is converted to an internal render scale as `1 / upscale_ratio`.
+
+## ObjectBench v5 multi-suite methodology
+
+One Minecraft launch traverses multiple deterministic workloads so specialized mods are not judged only by generic steady-state FPS.
+
+| Suite | Workload | Primary measurement |
+|---|---|---|
+| Renderer / FPS | geometry + transparency; occlusion + entities | FPS / frametime |
+| Particle | sustained particle stress | FPS / frametime |
+| Block Entity | BBE-relevant block entities + entities | FPS / frametime |
+| Chunk Generation | traversal into virgin chunks | streaming frametime proxy |
+| Lighting | repeated lighting/block-state updates | FPS / frametime |
+| Memory | whole Minecraft process tree | peak RSS MB |
+| Network | integrated-server loopback update stress | FPS / frametime |
+| Super Resolution | native vs upscaled OpenGL profiles | FPS, 1% low, P99, vs-native % |
+| Save / Quit | reserved for graceful shutdown timing | planned — no synthetic number |
+
+The graphical scenes are:
+
+- `geometry_transparency`
+- `occlusion_entities`
+- `mixed_block_entities`
+- `particle_stress`
+- `lighting_updates`
+- `network_updates`
+- `chunk_generation`
+
+The client benchmark mod controls player position and camera directly. There is no mouse/keyboard automation. The pristine world template is restored before every launch.
+
+## Standard OpenGL vs Vulkan methodology
+
+Default authored mode uses **2 repetitions per backend**. Backend order is balanced ABBA/BAAB by stack to reduce order drift.
+
+Each run includes:
 
 - initial stabilization
 - per-scene warmup
 - per-scene measurement
 - backend verification from Sodium's own log
 - pristine world reset
-- isolated Minecraft process tree and hard cleanup
+- process-tree RSS sampling
+- isolated Minecraft process tree and cleanup
 
 Metrics include:
 
@@ -102,32 +161,27 @@ Metrics include:
 - 1% low FPS
 - 0.1% low FPS
 - p99 frame time
-- per-scene metrics
+- per-scene / per-suite metrics
+- peak process-tree RSS
 - Vulkan vs OpenGL percentage
 
-A Vulkan result is accepted only when Sodium explicitly reports the Vulkan backend. Failed Vulkan initialization or OpenGL fallback is recorded as **invalid**, never silently counted as Vulkan.
+A Vulkan result is accepted only when Sodium explicitly reports Vulkan. Failed initialization or OpenGL fallback is recorded as **invalid**.
 
 ## Quick mode
-
-Windows:
 
 ```text
 run-windows.bat --quick
 ```
 
-Linux:
-
 ```bash
 ./run-linux.sh --quick
 ```
-
-AI agent:
 
 ```bash
 python3 run-agent.py --quick --configs sodium,sodium_full --accept-eula
 ```
 
-Quick mode uses one repetition per backend and shorter sampling. Use standard mode for performance conclusions.
+Quick mode uses one repetition and shorter measurements. It is intended for screening and functional validation, not final performance conclusions.
 
 ## Selected stacks / backend diagnostics
 
@@ -141,10 +195,10 @@ The same benchmark arguments can be passed through `run-windows.bat` or `run-age
 
 ## Output
 
-Each benchmark creates:
+Each run creates:
 
 ```text
-results/20260818-210000/
+results/<timestamp>/
 ├── REPORT.md
 ├── summary.json
 ├── summary.csv
@@ -155,68 +209,42 @@ results/20260818-210000/
 └── logs/
 ```
 
-Convenience copies are also written to `results/latest-report.md`, `results/latest-summary.json`, and `results/latest-summary.csv`.
-
-AI-agent mode additionally writes:
+Convenience copies:
 
 ```text
-agent-result.json
+results/latest-report.md
+results/latest-summary.json
+results/latest-summary.csv
 ```
 
-A fully successful agent run must contain:
+AI-agent mode additionally writes `agent-result.json`.
 
-```json
-{"status":"success","invalid_runs":0}
-```
+The result viewer under `site/` accepts `summary.json` and `agent-result.json` locally in the browser; uploaded benchmark contents are not sent to a backend.
 
-## Configuration
+## Mod resolution
 
-Edit `benchmark-config.json` to change resolution, render distance, sample duration, repetitions, or the mod matrix. Both graphics backends inherit the same settings for a session.
+Exact compatible Modrinth versions and required dependency closures are resolved per benchmark session. Both OpenGL and Vulkan sides of a normal comparison use identical mod JARs.
 
-## Optional Modrinth token
-
-Public Modrinth resolution works without authentication. To use authenticated Modrinth API requests, set `MODRINTH_TOKEN` in the environment before launching.
-
-Windows PowerShell:
-
-```powershell
-$env:MODRINTH_TOKEN = "mrp_your_token_here"
-.\run-windows.ps1
-```
-
-Linux:
-
-```bash
-export MODRINTH_TOKEN='mrp_your_token_here'
-./run-linux.sh
-```
-
-AI agent:
-
-```bash
-export MODRINTH_TOKEN='mrp_your_token_here'
-python3 run-agent.py --accept-eula
-```
-
-The token is attached only to requests sent to `api.modrinth.com`, is not sent to download/CDN hosts, and is not written to benchmark reports. Do not commit it to the repository.
+Public resolution works without authentication. Optional authenticated requests use `MODRINTH_TOKEN` only for `api.modrinth.com`; the token is not sent to download/CDN hosts or written to reports.
 
 ## Validation
 
-Permanent integration CI covers all three supported paths:
+CI contains separate validation paths for:
 
-- **Windows:** full benchmark environment preparation through the Windows launcher, including resolution of the complete mod matrix.
-- **Linux:** real quick OpenGL + Vulkan benchmark through the Linux launcher.
-- **AI agent:** real headless OpenGL + Vulkan benchmark through `run-agent.py`, including Sodium baseline, BadOptimizations, Better Block Entities, and full stack, plus validation of `agent-result.json`.
+- Windows environment preparation
+- Linux real OpenGL + Vulkan rendering
+- AI-agent/headless execution
+- ObjectBench v5 multi-suite schema
+- dedicated Super Resolution preparation/runtime smoke
+- exhaustive 256-stack sharded screening
 
-The latest machine-readable three-platform CI status is written to `ci/integration-smoke.json`.
-
-CI/agent VMs may use virtual/software graphics; their FPS is functional validation only. Performance conclusions should come from the target physical GPU.
+CI/agent VMs may use software graphics. Their absolute FPS is functional/screening data; final conclusions should come from the target physical GPU.
 
 ## Requirements and notes
 
 - Internet access is required on the first run.
-- A Vulkan-capable driver is required for physical Vulkan benchmarking.
-- Close other games, renderers, recording software, and heavy background tasks before benchmarking.
-- Do not compare absolute FPS from different machines as a controlled A/B test.
-- The primary comparison is **OpenGL vs Vulkan and mod-stack differences on the same hardware**.
+- A Vulkan-capable driver is required for native Vulkan benchmarking.
+- Super Resolution algorithms have different GPU/driver/extension requirements; unsupported profiles remain invalid rather than being silently substituted.
+- Close games, overlays, recording software, and other heavy background tasks before physical-hardware measurements.
+- Do not compare absolute FPS from unrelated machines as a controlled A/B test.
 - The scripts use an offline benchmark username and local singleplayer worlds only.
