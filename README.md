@@ -140,6 +140,26 @@ Convenience copies are also written to `results/latest-report.md`, `results/late
 
 Edit `benchmark-config.json` to change resolution, render distance, sample duration, repetitions, or the mod matrix. Both backends inherit the same settings for a given benchmark session.
 
+## Optional Modrinth token
+
+Public Modrinth search/version resolution works without authentication. If you still want authenticated Modrinth API requests, set a personal token through the `MODRINTH_TOKEN` environment variable before launching the benchmark.
+
+Windows PowerShell:
+
+```powershell
+$env:MODRINTH_TOKEN = "mrp_your_token_here"
+.\run-windows.ps1
+```
+
+Linux / AI agent:
+
+```bash
+export MODRINTH_TOKEN='mrp_your_token_here'
+./run-linux.sh
+```
+
+The token is attached only to requests sent to `api.modrinth.com`. It is not sent to Modrinth CDN/download URLs, is never written to the benchmark reports, and should never be committed to this repository. For CI/agents, inject it through the platform's secret/environment-variable system.
+
 ## Validation
 
 The repository includes permanent cross-platform CI checks. During development the complete user-facing launch path was also exercised in virtual machines:
