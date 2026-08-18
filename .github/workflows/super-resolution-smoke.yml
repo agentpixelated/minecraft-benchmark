@@ -15,6 +15,7 @@ concurrency:
 
 jobs:
   announce:
+    continue-on-error: true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,17 +26,16 @@ jobs:
           RUN_ID: ${{ github.run_id }}
           SOURCE_SHA: ${{ github.sha }}
         run: |
-          mkdir -p ci
-          printf '{"run_id":%s,"source_sha":"%s","status":"started"}\n' "$RUN_ID" "$SOURCE_SHA" > ci/super-resolution-live.json
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git pull --rebase
+          mkdir -p ci
+          printf '{"run_id":%s,"source_sha":"%s","status":"started"}\n' "$RUN_ID" "$SOURCE_SHA" > ci/super-resolution-live.json
           git add ci/super-resolution-live.json
           git commit -m 'Record live Super Resolution smoke run' || true
           git push
 
   windows-prepare:
-    needs: announce
     runs-on: windows-2025
     timeout-minutes: 30
     steps:
@@ -47,7 +47,6 @@ jobs:
         run: .\run-windows.ps1 --quick --super-resolution --configs "sr_native,sr_mod_disabled,sr_fsr1_quality" --accept-eula --prepare-only
 
   linux-runtime:
-    needs: announce
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     steps:
@@ -120,6 +119,9 @@ jobs:
           SOURCE_SHA: ${{ github.sha }}
           RUN_ID: ${{ github.run_id }}
         run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git pull --rebase
           mkdir -p ci
           python3 - <<'PY'
           import json, os, pathlib
@@ -150,9 +152,6 @@ jobs:
           pathlib.Path('ci/super-resolution-status.json').write_text(json.dumps(status,indent=2)+'\n')
           print(json.dumps(status,indent=2))
           PY
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git pull --rebase
           git add ci/super-resolution-status.json
           git commit -m 'Record Super Resolution smoke result' || true
           git push
