@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
 import json
 import os
 import shutil
@@ -113,7 +114,8 @@ def ensure_objectbench(java: Path, cfg: dict[str, Any], rebuild: bool = False) -
     src_java = ROOT / "objectbench" / "ObjectBenchClient.java"
     src_meta = ROOT / "objectbench" / "fabric.mod.json"
     signature = BUILD_CACHE / "source-signature.txt"
-    sig = str(hash((src_java.read_text(encoding="utf-8"), src_meta.read_text(encoding="utf-8"), cfg["minecraft_version"])))
+    payload = (src_java.read_bytes() + b"\0" + src_meta.read_bytes() + b"\0" + cfg["minecraft_version"].encode())
+    sig = hashlib.sha256(payload).hexdigest()
     if jar.exists() and signature.exists() and signature.read_text() == sig and not rebuild:
         return jar
     safe_rmtree(BUILD_CACHE); BUILD_CACHE.mkdir(parents=True, exist_ok=True)
