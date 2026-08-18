@@ -1,6 +1,77 @@
 {
   "minecraft_version": "26.2",
   "base_mods": ["fabric-api", "sodium"],
+  "optional_mods": [
+    "immediatelyfast",
+    "entityculling",
+    "moreculling",
+    "lithium",
+    "ferrite-core",
+    "c2me-fabric",
+    "badoptimizations",
+    "better-block-entities"
+  ],
+  "mod_labels": {
+    "immediatelyfast": "ImmediatelyFast",
+    "entityculling": "EntityCulling",
+    "moreculling": "MoreCulling",
+    "lithium": "Lithium",
+    "ferrite-core": "FerriteCore",
+    "c2me-fabric": "C2ME",
+    "badoptimizations": "BadOptimizations",
+    "better-block-entities": "Better Block Entities"
+  },
+  "suites": {
+    "renderer_fps": {
+      "label": "Renderer / FPS",
+      "kind": "frametime",
+      "scenes": ["geometry_transparency", "occlusion_entities"],
+      "primary_metric": "mean_fps"
+    },
+    "particle": {
+      "label": "Particle",
+      "kind": "frametime",
+      "scenes": ["particle_stress"],
+      "primary_metric": "mean_fps"
+    },
+    "block_entity": {
+      "label": "Block Entity",
+      "kind": "frametime",
+      "scenes": ["mixed_block_entities"],
+      "primary_metric": "mean_fps"
+    },
+    "chunk_generation": {
+      "label": "Chunk Generation",
+      "kind": "streaming_frametime_proxy",
+      "scenes": ["chunk_generation"],
+      "primary_metric": "mean_fps",
+      "note": "Measures client frametime while traversing virgin chunks; dedicated chunks/sec instrumentation is a future refinement."
+    },
+    "lighting": {
+      "label": "Lighting",
+      "kind": "frametime",
+      "scenes": ["lighting_updates"],
+      "primary_metric": "mean_fps"
+    },
+    "memory": {
+      "label": "Memory",
+      "kind": "process_rss",
+      "primary_metric": "peak_rss_mb"
+    },
+    "network": {
+      "label": "Network",
+      "kind": "loopback_update_stress",
+      "scenes": ["network_updates"],
+      "primary_metric": "mean_fps",
+      "note": "Integrated-server loopback update stress; this is not internet latency/throughput."
+    },
+    "save_quit": {
+      "label": "Save / Quit",
+      "kind": "planned",
+      "primary_metric": "save_quit_ms",
+      "note": "Reserved in the result schema; true graceful save/quit timing will be added separately rather than using forced process cleanup."
+    }
+  },
   "window": {"width": 960, "height": 540},
   "video": {
     "render_distance": 10,
@@ -19,7 +90,7 @@
     "repeats_per_backend": 2,
     "cooldown_seconds": 2,
     "backend_proof_timeout_seconds": 90,
-    "result_timeout_seconds": 90
+    "result_timeout_seconds": 150
   },
   "configs": [
     {"id": "sodium", "label": "Sodium only", "mods": []},
@@ -30,7 +101,7 @@
     {"id": "sodium_ferritecore", "label": "Sodium + FerriteCore", "mods": ["ferrite-core"]},
     {"id": "sodium_badoptimizations", "label": "Sodium + BadOptimizations", "mods": ["badoptimizations"]},
     {"id": "sodium_bbe", "label": "Sodium + Better Block Entities", "mods": ["better-block-entities"]},
-    {"id": "sodium_c2me", "label": "Sodium + C2ME", "mods": ["c2me-fabric"], "note": "Steady-state FPS only; use a separate chunk benchmark to judge C2ME."},
+    {"id": "sodium_c2me", "label": "Sodium + C2ME", "mods": ["c2me-fabric"]},
     {"id": "sodium_if_mc", "label": "Sodium + ImmediatelyFast + MoreCulling", "mods": ["immediatelyfast", "moreculling"]},
     {"id": "sodium_if_lithium", "label": "Sodium + ImmediatelyFast + Lithium", "mods": ["immediatelyfast", "lithium"]},
     {"id": "sodium_mc_lithium", "label": "Sodium + MoreCulling + Lithium", "mods": ["moreculling", "lithium"]},
