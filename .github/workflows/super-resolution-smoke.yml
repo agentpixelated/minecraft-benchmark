@@ -40,15 +40,15 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - name: Prepare SR benchmark through Windows user launcher
+      - name: Prepare Render Scale x SR benchmark through Windows user launcher
         shell: pwsh
         env:
           MC_EULA_ACCEPTED: '1'
-        run: .\run-windows.ps1 --quick --super-resolution --configs "sr_native,sr_mod_disabled,sr_fsr1_quality" --accept-eula --prepare-only
+        run: .\run-windows.ps1 --quick --super-resolution --configs "sr_native,sr_mod_disabled,sr_fsr1_rs100,sr_fsr1_rs75,sr_fsr1_quality,sr_fsr1_performance,sr_sgsr1_quality" --accept-eula --prepare-only
 
   linux-runtime:
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - name: Ensure minimal headless OpenGL runtime
@@ -60,12 +60,12 @@ jobs:
             timeout 180s sudo apt-get install -y -qq xvfb
           fi
           test -x "$(command -v xvfb-run)"
-      - name: Run native, disabled-overhead, FSR1 and SGSR1 profiles
+      - name: Run native and Render Scale x SR profiles
         env:
           MC_EULA_ACCEPTED: '1'
           LIBGL_ALWAYS_SOFTWARE: '1'
-        run: xvfb-run -a ./run-linux.sh --quick --super-resolution --configs sr_native,sr_mod_disabled,sr_fsr1_quality,sr_sgsr1_quality --accept-eula
-      - name: Verify SR profile proof and result schema
+        run: xvfb-run -a ./run-linux.sh --quick --super-resolution --configs sr_native,sr_mod_disabled,sr_fsr1_rs100,sr_fsr1_rs75,sr_fsr1_quality,sr_fsr1_performance,sr_sgsr1_quality --accept-eula
+      - name: Verify render scale, SR proof, and result schema
         run: |
           python3 - <<'PY'
           import json
@@ -73,26 +73,32 @@ jobs:
           assert d['matrix']['mode']=='super_resolution', d['matrix']
           assert d['matrix']['backend']=='opengl'
           rows=d['raw_runs']
-          assert len(rows)==4, len(rows)
+          ids=['sr_native','sr_mod_disabled','sr_fsr1_rs100','sr_fsr1_rs75','sr_fsr1_quality','sr_fsr1_performance','sr_sgsr1_quality']
+          assert len(rows)==len(ids), len(rows)
           by={r['config']:r for r in rows}
-          for cid in ['sr_native','sr_mod_disabled','sr_fsr1_quality','sr_sgsr1_quality']:
+          for cid in ids:
               r=by[cid]
               assert r.get('backend')=='opengl' and r.get('backend_proven') is True, (cid,r.get('reason'))
-          for cid in ['sr_fsr1_quality','sr_sgsr1_quality']:
+          for cid in ids[2:]:
               sr=by[cid].get('super_resolution',{})
               assert sr.get('proven') is True, (cid,sr,by[cid].get('reason'))
               assert sr.get('algorithm_initialized') is True, (cid,sr)
+          scales={cid:by[cid].get('super_resolution',{}).get('render_scale') for cid in ids[2:]}
+          assert abs(scales['sr_fsr1_rs100']-1.0)<1e-6, scales
+          assert abs(scales['sr_fsr1_rs75']-0.75)<1e-6, scales
+          assert abs(scales['sr_fsr1_quality']-(2/3))<1e-5, scales
+          assert abs(scales['sr_fsr1_performance']-0.5)<1e-6, scales
           suites=d['suite_results']['configs']
           assert suites['sr_native']['suites']['super_resolution']['status']=='measured'
-          assert suites['sr_fsr1_quality']['suites']['super_resolution']['vs_native_pct'] is not None
-          print(json.dumps({
-            'status':'success',
-            'profiles':{cid:{
-              'fps':suites[cid]['suites']['super_resolution']['opengl'],
-              'vs_native_pct':suites[cid]['suites']['super_resolution'].get('vs_native_pct'),
-              'render_scale':suites[cid]['suites']['super_resolution'].get('profile',{}).get('render_scale')
-            } for cid in suites},
-          },indent=2))
+          for cid in ids[2:]:
+              assert suites[cid]['suites']['super_resolution']['vs_native_pct'] is not None, cid
+          print(json.dumps({'status':'success','render_scales':scales,'profiles':{
+              cid:{
+                'fps':suites[cid]['suites']['super_resolution']['opengl'],
+                'vs_native_pct':suites[cid]['suites']['super_resolution'].get('vs_native_pct'),
+                'render_scale':suites[cid]['suites']['super_resolution'].get('profile',{}).get('render_scale')
+              } for cid in suites
+          }},indent=2))
           PY
       - uses: actions/upload-artifact@v4
         if: always()
