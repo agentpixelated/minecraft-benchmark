@@ -21,7 +21,6 @@ def _slug_token(slug: str) -> str:
 def generate_powerset_configs(cfg: dict[str, Any]) -> list[dict[str, Any]]:
     mods = list(cfg.get("optional_mods") or [])
     if not mods:
-        # Backward-compatible fallback: infer all optional mods from authored configs.
         seen: list[str] = []
         for c in cfg.get("configs", []):
             for slug in c.get("mods", []):
@@ -58,6 +57,20 @@ def _scale_label(scale: float) -> str:
     if abs(pct - rounded) < 0.05:
         return f"{int(rounded)}%"
     return f"{pct:.1f}%"
+
+
+def _sr_profile_id(key: str, scale: float) -> str:
+    """Keep useful old IDs while adding a systematic scale matrix."""
+    pct = scale * 100.0
+    if key == "fsr1":
+        if abs(pct - 66.6667) < 0.2: return "sr_fsr1_quality"
+        if abs(pct - 58.8235) < 0.2: return "sr_fsr1_balanced"
+        if abs(pct - 50.0) < 0.2: return "sr_fsr1_performance"
+    if abs(pct - 66.6667) < 0.2 and key in {"sgsr1", "sgsr2", "fsr2", "fsr_v2", "fsr_v3", "dlss"}:
+        return f"sr_{key}_quality"
+    if abs(pct - 58.8235) < 0.2 and key == "xess":
+        return "sr_xess_quality"
+    return f"sr_{key}_rs{_scale_id(scale)}"
 
 
 def generate_super_resolution_configs(cfg: dict[str, Any]) -> list[dict[str, Any]]:
@@ -109,7 +122,6 @@ def generate_super_resolution_configs(cfg: dict[str, Any]) -> list[dict[str, Any
     scales = [float(x) for x in spec.get("render_scales", [1.0, 2 / 3, 0.5])]
     algorithms = list(spec.get("algorithms") or [])
 
-    # Backward compatibility with the original authored profile list.
     if not algorithms:
         for profile in spec.get("profiles", []):
             p = dict(profile)
@@ -141,13 +153,13 @@ def generate_super_resolution_configs(cfg: dict[str, Any]) -> list[dict[str, Any
             if scale <= 0 or scale > 1:
                 raise ValueError(f"render scale must be in (0,1], got {scale}")
             ratio = 1.0 / scale
-            sid = _scale_id(scale)
-            profile_id = f"sr_{key}_rs{sid}"
+            profile_id = _sr_profile_id(key, scale)
             sr = {
                 "installed": True,
                 "enabled": True,
                 "profile": profile_id,
                 "algorithm": algo,
+                "algorithm_id": key,
                 "upscale_ratio": ratio,
                 "render_scale": scale,
                 "render_scale_percent": round(scale * 100.0, 3),
