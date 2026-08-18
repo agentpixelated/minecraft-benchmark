@@ -40,15 +40,15 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - name: Prepare Render Scale x SR benchmark through Windows user launcher
+      - name: Prepare matched raw RenderScale and SR profiles
         shell: pwsh
         env:
           MC_EULA_ACCEPTED: '1'
-        run: .\run-windows.ps1 --quick --super-resolution --configs "sr_native,sr_mod_disabled,sr_fsr1_rs100,sr_fsr1_rs75,sr_fsr1_quality,sr_fsr1_performance,sr_sgsr1_quality" --accept-eula --prepare-only
+        run: .\run-windows.ps1 --quick --super-resolution --configs "sr_native,sr_mod_disabled,renderscale_rs100,renderscale_rs75,renderscale_rs50,sr_fsr1_rs100,sr_fsr1_rs75,sr_fsr1_performance,sr_sgsr1_quality" --accept-eula --prepare-only
 
   linux-runtime:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@v4
       - name: Ensure minimal headless OpenGL runtime
@@ -60,43 +60,44 @@ jobs:
             timeout 180s sudo apt-get install -y -qq xvfb
           fi
           test -x "$(command -v xvfb-run)"
-      - name: Run native and Render Scale x SR profiles
+      - name: Run matched raw RenderScale and SR profiles
         env:
           MC_EULA_ACCEPTED: '1'
           LIBGL_ALWAYS_SOFTWARE: '1'
-        run: xvfb-run -a ./run-linux.sh --quick --super-resolution --configs sr_native,sr_mod_disabled,sr_fsr1_rs100,sr_fsr1_rs75,sr_fsr1_quality,sr_fsr1_performance,sr_sgsr1_quality --accept-eula
-      - name: Verify render scale, SR proof, and result schema
+        run: xvfb-run -a ./run-linux.sh --quick --super-resolution --configs sr_native,sr_mod_disabled,renderscale_rs100,renderscale_rs75,renderscale_rs50,sr_fsr1_rs100,sr_fsr1_rs75,sr_fsr1_performance,sr_sgsr1_quality --accept-eula
+      - name: Verify raw scale, SR proof, and matched baselines
         run: |
           python3 - <<'PY'
           import json
           d=json.load(open('results/latest-summary.json'))
           assert d['matrix']['mode']=='super_resolution', d['matrix']
           assert d['matrix']['backend']=='opengl'
-          rows=d['raw_runs']
-          ids=['sr_native','sr_mod_disabled','sr_fsr1_rs100','sr_fsr1_rs75','sr_fsr1_quality','sr_fsr1_performance','sr_sgsr1_quality']
-          assert len(rows)==len(ids), len(rows)
+          ids=['sr_native','sr_mod_disabled','renderscale_rs100','renderscale_rs75','renderscale_rs50','sr_fsr1_rs100','sr_fsr1_rs75','sr_fsr1_performance','sr_sgsr1_quality']
+          rows=d['raw_runs']; assert len(rows)==len(ids), len(rows)
           by={r['config']:r for r in rows}
           for cid in ids:
               r=by[cid]
               assert r.get('backend')=='opengl' and r.get('backend_proven') is True, (cid,r.get('reason'))
-          for cid in ids[2:]:
+          for cid,scale in [('renderscale_rs100',1.0),('renderscale_rs75',0.75),('renderscale_rs50',0.5)]:
+              rs=by[cid].get('render_scale',{})
+              assert rs.get('proven') is True, (cid,rs,by[cid].get('reason'))
+              assert abs(rs.get('configured_scale')-scale)<1e-6, (cid,rs)
+          for cid,scale in [('sr_fsr1_rs100',1.0),('sr_fsr1_rs75',0.75),('sr_fsr1_performance',0.5),('sr_sgsr1_quality',2/3)]:
               sr=by[cid].get('super_resolution',{})
-              assert sr.get('proven') is True, (cid,sr,by[cid].get('reason'))
-              assert sr.get('algorithm_initialized') is True, (cid,sr)
-          scales={cid:by[cid].get('super_resolution',{}).get('render_scale') for cid in ids[2:]}
-          assert abs(scales['sr_fsr1_rs100']-1.0)<1e-6, scales
-          assert abs(scales['sr_fsr1_rs75']-0.75)<1e-6, scales
-          assert abs(scales['sr_fsr1_quality']-(2/3))<1e-5, scales
-          assert abs(scales['sr_fsr1_performance']-0.5)<1e-6, scales
+              assert sr.get('proven') is True and sr.get('algorithm_initialized') is True, (cid,sr,by[cid].get('reason'))
+              assert abs(sr.get('render_scale')-scale)<1e-5, (cid,sr)
           suites=d['suite_results']['configs']
-          assert suites['sr_native']['suites']['super_resolution']['status']=='measured'
-          for cid in ids[2:]:
-              assert suites[cid]['suites']['super_resolution']['vs_native_pct'] is not None, cid
-          print(json.dumps({'status':'success','render_scales':scales,'profiles':{
+          for cid in ['sr_fsr1_rs100','sr_fsr1_rs75','sr_fsr1_performance']:
+              s=suites[cid]['suites']['super_resolution']
+              assert s.get('vs_native_pct') is not None, cid
+              assert s.get('vs_raw_scale_pct') is not None, (cid,s)
+          print(json.dumps({'status':'success','profiles':{
               cid:{
                 'fps':suites[cid]['suites']['super_resolution']['opengl'],
+                'render_scale':suites[cid]['suites']['super_resolution'].get('profile',{}).get('render_scale'),
+                'profile_kind':suites[cid]['suites']['super_resolution'].get('profile_kind'),
                 'vs_native_pct':suites[cid]['suites']['super_resolution'].get('vs_native_pct'),
-                'render_scale':suites[cid]['suites']['super_resolution'].get('profile',{}).get('render_scale')
+                'vs_raw_scale_pct':suites[cid]['suites']['super_resolution'].get('vs_raw_scale_pct')
               } for cid in suites
           }},indent=2))
           PY
@@ -108,6 +109,7 @@ jobs:
             results/
             .mcbench/game/logs/
             .mcbench/game/config/super_resolution/config.toml
+            .mcbench/game/config/renderscale.json5
           if-no-files-found: ignore
           retention-days: 7
 
@@ -137,32 +139,19 @@ jobs:
           mkdir -p ci
           python3 - <<'PY'
           import json, os, pathlib
-          status={
-            'run_id':int(os.environ['RUN_ID']),
-            'source_sha':os.environ['SOURCE_SHA'],
-            'windows_prepare':os.environ['WINDOWS_RESULT'],
-            'linux_runtime':os.environ['LINUX_RESULT'],
-          }
+          status={'run_id':int(os.environ['RUN_ID']),'source_sha':os.environ['SOURCE_SHA'],
+                  'windows_prepare':os.environ['WINDOWS_RESULT'],'linux_runtime':os.environ['LINUX_RESULT']}
           candidates=list(pathlib.Path('downloaded').rglob('latest-summary.json')) if pathlib.Path('downloaded').exists() else []
-          if not candidates and pathlib.Path('downloaded').exists():
-              candidates=list(pathlib.Path('downloaded').rglob('summary.json'))
+          if not candidates and pathlib.Path('downloaded').exists(): candidates=list(pathlib.Path('downloaded').rglob('summary.json'))
           if candidates:
-              d=json.load(candidates[0].open())
-              status['matrix']=d.get('matrix')
-              status['invalid_runs']=len(d.get('aggregate',{}).get('invalid_runs',[]))
-              profiles={}
+              d=json.load(candidates[0].open()); status['matrix']=d.get('matrix'); status['invalid_runs']=len(d.get('aggregate',{}).get('invalid_runs',[])); profiles={}
               for cid,item in d.get('suite_results',{}).get('configs',{}).items():
                   sr=item.get('suites',{}).get('super_resolution',{})
-                  if sr.get('status')=='measured':
-                      profiles[cid]={
-                        'fps':sr.get('opengl'),
-                        'vs_native_pct':sr.get('vs_native_pct'),
-                        'render_scale':sr.get('profile',{}).get('render_scale'),
-                      }
+                  if sr.get('status')=='measured': profiles[cid]={'fps':sr.get('opengl'),'render_scale':sr.get('profile',{}).get('render_scale'),
+                      'profile_kind':sr.get('profile_kind'),'vs_native_pct':sr.get('vs_native_pct'),'vs_raw_scale_pct':sr.get('vs_raw_scale_pct')}
               status['profiles']=profiles
           status['status']='success' if status['windows_prepare']=='success' and status['linux_runtime']=='success' else 'failure'
-          pathlib.Path('ci/super-resolution-status.json').write_text(json.dumps(status,indent=2)+'\n')
-          print(json.dumps(status,indent=2))
+          pathlib.Path('ci/super-resolution-status.json').write_text(json.dumps(status,indent=2)+'\n'); print(json.dumps(status,indent=2))
           PY
           git add ci/super-resolution-status.json
           git commit -m 'Record Super Resolution smoke result' || true
