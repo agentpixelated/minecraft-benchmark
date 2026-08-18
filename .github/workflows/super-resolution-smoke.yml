@@ -4,9 +4,6 @@ on:
   push:
     paths:
       - '.github/workflows/super-resolution-smoke.yml'
-      - 'benchmark-config.json'
-      - 'mcbench/**'
-      - 'run-agent.py'
   workflow_dispatch:
 
 permissions:
@@ -102,3 +99,60 @@ jobs:
             .mcbench/game/config/super_resolution/config.toml
           if-no-files-found: ignore
           retention-days: 7
+
+  record:
+    if: always()
+    needs: [windows-prepare, linux-runtime]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        if: needs.linux-runtime.result == 'success'
+        with:
+          name: super-resolution-smoke-results
+          path: downloaded
+      - name: Record final SR smoke status
+        env:
+          WINDOWS_RESULT: ${{ needs.windows-prepare.result }}
+          LINUX_RESULT: ${{ needs.linux-runtime.result }}
+          SOURCE_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          mkdir -p ci
+          python3 - <<'PY'
+          import json, os, pathlib
+          status={
+            'run_id':int(os.environ['RUN_ID']),
+            'source_sha':os.environ['SOURCE_SHA'],
+            'windows_prepare':os.environ['WINDOWS_RESULT'],
+            'linux_runtime':os.environ['LINUX_RESULT'],
+          }
+          candidates=list(pathlib.Path('downloaded').rglob('latest-summary.json')) if pathlib.Path('downloaded').exists() else []
+          if not candidates and pathlib.Path('downloaded').exists():
+              candidates=list(pathlib.Path('downloaded').rglob('summary.json'))
+          if candidates:
+              d=json.load(candidates[0].open())
+              status['matrix']=d.get('matrix')
+              status['invalid_runs']=len(d.get('aggregate',{}).get('invalid_runs',[]))
+              profiles={}
+              for cid,item in d.get('suite_results',{}).get('configs',{}).items():
+                  sr=item.get('suites',{}).get('super_resolution',{})
+                  if sr.get('status')=='measured':
+                      profiles[cid]={
+                        'fps':sr.get('opengl'),
+                        'vs_native_pct':sr.get('vs_native_pct'),
+                        'render_scale':sr.get('profile',{}).get('render_scale'),
+                      }
+              status['profiles']=profiles
+          status['status']='success' if status['windows_prepare']=='success' and status['linux_runtime']=='success' else 'failure'
+          pathlib.Path('ci/super-resolution-status.json').write_text(json.dumps(status,indent=2)+'\n')
+          print(json.dumps(status,indent=2))
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git pull --rebase
+          git add ci/super-resolution-status.json
+          git commit -m 'Record Super Resolution smoke result' || true
+          git push
