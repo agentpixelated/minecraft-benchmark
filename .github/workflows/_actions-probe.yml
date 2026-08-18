@@ -1,0 +1,39 @@
+name: Temporary Actions status probe
+
+on:
+  push:
+    paths:
+      - '.github/workflows/_actions-probe.yml'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Record benchmark workflow status
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p ci
+          python3 - <<'PY'
+          import json, subprocess
+          names=['multisuite-validation.yml','exhaustive-powerset.yml','integration-smoke.yml']
+          out={}
+          for name in names:
+              cp=subprocess.run(['gh','run','list','--workflow',name,'--limit','3','--json','databaseId,status,conclusion,headSha,createdAt'],capture_output=True,text=True)
+              out[name]=json.loads(cp.stdout or '[]') if cp.returncode==0 else {'error':cp.stderr}
+          open('ci/actions-live.json','w').write(json.dumps(out,indent=2)+'\n')
+          print(json.dumps(out,indent=2))
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git pull --rebase
+          git add ci/actions-live.json
+          git commit -m 'Record temporary Actions status' || true
+          git push
