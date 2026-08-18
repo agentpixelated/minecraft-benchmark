@@ -74,16 +74,20 @@ def _sr_profile_id(key: str, scale: float) -> str:
 
 
 def generate_super_resolution_configs(cfg: dict[str, Any]) -> list[dict[str, Any]]:
-    """Generate an OpenGL-only Render Scale x Super Resolution matrix.
+    """Generate raw RenderScale baselines plus an OpenGL-only SR cross-product.
 
-    Super Resolution's Minecraft 26.2 release disables its upscaling path on the
-    native Vulkan backend, so this deliberately stays outside the OpenGL/Vulkan
-    optimization-mod power set. The native baseline contains no SR mod. A second
-    baseline installs the SR mod but keeps it disabled. Every algorithm template
-    is then crossed with every configured internal render scale.
+    RenderScale and Super Resolution are never installed in the same profile.
+    Raw RenderScale profiles provide the control condition for a given internal
+    resolution; SR profiles then use Super Resolution's own upscale_ratio at the
+    same scale. This keeps the comparison interpretable and avoids two mods both
+    trying to own the game's render target.
     """
     spec = dict(cfg.get("super_resolution_benchmark") or {})
-    mod = spec.get("mod", "superresolution")
+    sr_mod = spec.get("mod", "superresolution")
+    rs_mod = spec.get("render_scale_mod", "renderscale")
+    scales = [float(x) for x in spec.get("render_scales", [1.0, 2 / 3, 0.5])]
+    sharpness = float(spec.get("sharpness", 0.55))
+
     out: list[dict[str, Any]] = [
         {
             "id": "sr_native",
@@ -102,7 +106,7 @@ def generate_super_resolution_configs(cfg: dict[str, Any]) -> list[dict[str, Any
         {
             "id": "sr_mod_disabled",
             "label": "SR mod installed, disabled (100%)",
-            "mods": [mod],
+            "mods": [sr_mod],
             "generated": True,
             "benchmark_family": "super_resolution",
             "super_resolution": {
@@ -112,20 +116,39 @@ def generate_super_resolution_configs(cfg: dict[str, Any]) -> list[dict[str, Any
                 "algorithm": "fsr1",
                 "render_scale": 1.0,
                 "upscale_ratio": 1.0,
-                "sharpness": float(spec.get("sharpness", 0.55)),
+                "sharpness": sharpness,
                 "hardware_optional": False,
             },
         },
     ]
 
-    sharpness = float(spec.get("sharpness", 0.55))
-    scales = [float(x) for x in spec.get("render_scales", [1.0, 2 / 3, 0.5])]
-    algorithms = list(spec.get("algorithms") or [])
+    # Raw render-scale controls. RenderScale's internal FSR switch remains off;
+    # these are pure resolution scaling baselines, not another SR implementation.
+    for scale in scales:
+        if scale <= 0 or scale > 1:
+            raise ValueError(f"render scale must be in (0,1], got {scale}")
+        cid = f"renderscale_rs{_scale_id(scale)}"
+        out.append({
+            "id": cid,
+            "label": f"Raw RenderScale @ {_scale_label(scale)}",
+            "mods": [rs_mod],
+            "generated": True,
+            "benchmark_family": "super_resolution",
+            "render_scale": {
+                "installed": True,
+                "profile": cid,
+                "render_scale": scale,
+                "render_scale_percent": round(scale * 100.0, 3),
+                "force_linear": False,
+                "fsr": False,
+            },
+        })
 
+    algorithms = list(spec.get("algorithms") or [])
     if not algorithms:
         for profile in spec.get("profiles", []):
             p = dict(profile)
-            if p.get("id") == "sr_mod_disabled":
+            if p.get("id") == "sr_mod_disabled" or p.get("legacy_alias"):
                 continue
             ratio = float(p.get("upscale_ratio", 1.0))
             sr = {
@@ -140,7 +163,7 @@ def generate_super_resolution_configs(cfg: dict[str, Any]) -> list[dict[str, Any
                 "hardware_optional": bool(p.get("hardware_optional", False)),
             }
             out.append({
-                "id": p["id"], "label": p.get("label", p["id"]), "mods": [mod],
+                "id": p["id"], "label": p.get("label", p["id"]), "mods": [sr_mod],
                 "generated": True, "benchmark_family": "super_resolution", "super_resolution": sr,
             })
         return out
@@ -150,8 +173,6 @@ def generate_super_resolution_configs(cfg: dict[str, Any]) -> list[dict[str, Any
         key = str(a["id"])
         algo = str(a.get("algorithm", key))
         for scale in scales:
-            if scale <= 0 or scale > 1:
-                raise ValueError(f"render scale must be in (0,1], got {scale}")
             ratio = 1.0 / scale
             profile_id = _sr_profile_id(key, scale)
             sr = {
@@ -170,7 +191,7 @@ def generate_super_resolution_configs(cfg: dict[str, Any]) -> list[dict[str, Any
             out.append({
                 "id": profile_id,
                 "label": f"{a.get('label', key)} @ {_scale_label(scale)} render scale",
-                "mods": [mod],
+                "mods": [sr_mod],
                 "generated": True,
                 "benchmark_family": "super_resolution",
                 "super_resolution": sr,
