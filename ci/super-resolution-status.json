@@ -1,7 +1,39 @@
 {
-  "run_id": 32171847551,
-  "source_sha": "4d68ee290a0284ccdc5325e78940d9f6d4348d89",
+  "run_id": 32172304215,
+  "source_sha": "4d6297ed7608132c4758eca5ce1032f3d8995844",
   "windows_prepare": "success",
-  "linux_runtime": "cancelled",
-  "status": "failure"
+  "linux_runtime": "success",
+  "matrix": {
+    "mode": "super_resolution",
+    "total_configs": 12,
+    "backend": "opengl",
+    "shard_index": 0,
+    "shard_count": 1,
+    "shard_configs": 4,
+    "note": "Dedicated SR profiles are kept outside the OpenGL/Vulkan optimization-mod powerset because the MC 26.2 SR build disables upscaling on Vulkan."
+  },
+  "invalid_runs": 0,
+  "profiles": {
+    "sr_native": {
+      "fps": 15.62512,
+      "vs_native_pct": 0.0,
+      "render_scale": 1.0
+    },
+    "sr_mod_disabled": {
+      "fps": 19.05478,
+      "vs_native_pct": 21.94965542664633,
+      "render_scale": 1.0
+    },
+    "sr_fsr1_quality": {
+      "fps": 19.613806666666665,
+      "vs_native_pct": 25.52739861624529,
+      "render_scale": 0.6666666666666666
+    },
+    "sr_sgsr1_quality": {
+      "fps": 16.608053333333334,
+      "vs_native_pct": 6.29072502056518,
+      "render_scale": 0.6666666666666666
+    }
+  },
+  "status": "success"
 }
