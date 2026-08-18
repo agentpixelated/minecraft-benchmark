@@ -1,0 +1,79 @@
+name: Multi-suite runtime validation
+
+on:
+  push:
+    paths:
+      - '.github/workflows/multisuite-validation.yml'
+      - 'benchmark-config.json'
+      - 'mcbench/**'
+      - 'objectbench/**'
+      - 'run-agent.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: multisuite-validation
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static self-tests
+        run: |
+          python3 -m compileall -q benchmark.py run-agent.py mcbench tools
+          python3 benchmark.py --self-test
+          python3 run-agent.py --self-test --json-out agent-self-test.json
+          cat agent-self-test.json
+      - name: Install graphics runtime
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb mesa-vulkan-drivers libvulkan1
+      - name: Run Sodium through every multi-suite scene on both backends
+        env:
+          MC_EULA_ACCEPTED: '1'
+          AI_AGENT_NAME: multisuite-validator
+        run: xvfb-run -a ./run-linux.sh --quick --configs sodium --accept-eula
+      - name: Verify suite schema and backend proof
+        run: |
+          python3 - <<'PY'
+          import json
+          d=json.load(open('results/latest-summary.json'))
+          assert d['schema']==2, d.keys()
+          assert len(d['raw_runs'])==2, len(d['raw_runs'])
+          assert all(r.get('backend_proven') for r in d['raw_runs']), d['raw_runs']
+          required={'geometry_transparency','occlusion_entities','mixed_block_entities','particle_stress','lighting_updates','network_updates','chunk_generation'}
+          for r in d['raw_runs']:
+              assert required <= set(r['scenes']), (required-set(r['scenes']))
+              assert r.get('process_metrics',{}).get('peak_rss_mb',0)>0
+          suites=d['suite_results']['configs']['sodium']['suites']
+          assert {'renderer_fps','particle','block_entity','chunk_generation','lighting','memory','network','save_quit'} <= set(suites)
+          assert suites['save_quit']['status']=='planned'
+          print(json.dumps({'status':'success','valid_runs':2,'suites':list(suites),'matrix':d['matrix']},indent=2))
+          PY
+      - name: Record validation status
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          mkdir -p ci
+          printf '{"source_sha":"%s","status":"success","valid_runs":2,"suites":8,"exhaustive_configs":256}\n' "$SOURCE_SHA" > ci/multisuite-validation.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git pull --rebase
+          git add ci/multisuite-validation.json
+          git commit -m 'Record multi-suite validation result' || true
+          git push
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: multisuite-validation-results
+          path: |
+            results/
+            agent-self-test.json
+            .mcbench/cache/suite-worldgen/server.log
+          if-no-files-found: ignore
+          retention-days: 3
