@@ -1,38 +1,53 @@
 {
-  "run_id": 32172304215,
-  "source_sha": "4d6297ed7608132c4758eca5ce1032f3d8995844",
+  "run_id": 32172970358,
+  "source_sha": "da2d1f093270895f61bca15d283f22e2ecb61a87",
   "windows_prepare": "success",
   "linux_runtime": "success",
   "matrix": {
     "mode": "super_resolution",
-    "total_configs": 12,
+    "total_configs": 42,
     "backend": "opengl",
     "shard_index": 0,
     "shard_count": 1,
-    "shard_configs": 4,
+    "shard_configs": 7,
     "note": "Dedicated SR profiles are kept outside the OpenGL/Vulkan optimization-mod powerset because the MC 26.2 SR build disables upscaling on Vulkan."
   },
   "invalid_runs": 0,
   "profiles": {
     "sr_native": {
-      "fps": 15.62512,
+      "fps": 17.102573333333336,
       "vs_native_pct": 0.0,
       "render_scale": 1.0
     },
     "sr_mod_disabled": {
-      "fps": 19.05478,
-      "vs_native_pct": 21.94965542664633,
+      "fps": 19.00771,
+      "vs_native_pct": 11.139473747810257,
       "render_scale": 1.0
     },
+    "sr_fsr1_rs100": {
+      "fps": 20.005750000000003,
+      "vs_native_pct": 16.975086790058104,
+      "render_scale": 1.0
+    },
+    "sr_fsr1_rs75": {
+      "fps": 18.47191666666667,
+      "vs_native_pct": 8.006650850983043,
+      "render_scale": 0.75
+    },
     "sr_fsr1_quality": {
-      "fps": 19.613806666666665,
-      "vs_native_pct": 25.52739861624529,
-      "render_scale": 0.6666666666666666
+      "fps": 19.66277,
+      "vs_native_pct": 14.96965758759108,
+      "render_scale": 0.6666666667
+    },
+    "sr_fsr1_performance": {
+      "fps": 17.732746666666667,
+      "vs_native_pct": 3.684669675440655,
+      "render_scale": 0.5
     },
     "sr_sgsr1_quality": {
-      "fps": 16.608053333333334,
-      "vs_native_pct": 6.29072502056518,
-      "render_scale": 0.6666666666666666
+      "fps": 19.79256666666667,
+      "vs_native_pct": 15.72858821245613,
+      "render_scale": 0.6666666667
     }
   },
   "status": "success"
