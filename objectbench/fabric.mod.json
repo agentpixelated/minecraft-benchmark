@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "objectbench",
+  "version": "3.0.0",
+  "name": "ObjectBench",
+  "description": "Deterministic client-side Minecraft rendering benchmark harness.",
+  "environment": "client",
+  "entrypoints": {"client": ["bench.ObjectBenchClient"]},
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "~26.2",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}
