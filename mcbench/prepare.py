@@ -170,7 +170,7 @@ def wait_for_text(path: Path, needle: str, timeout: int) -> bool:
 
 
 def build_world(java: Path, cfg: dict[str, Any], accept_eula: bool, rebuild: bool = False) -> None:
-    marker = WORLD_TEMPLATE / ".objectbench-v3"
+    marker = WORLD_TEMPLATE / ".objectbench-v4"
     if marker.exists() and not rebuild: return
     if not accept_eula:
         if not sys.stdin.isatty():
@@ -195,8 +195,21 @@ def build_world(java: Path, cfg: dict[str, Any], accept_eula: bool, rebuild: boo
         "gamerule randomTickSpeed 0","gamerule doMobSpawning false","gamerule doWeatherCycle false","gamerule doDaylightCycle false","time set noon","weather clear",
         "fill -48 3 -48 48 3 48 minecraft:smooth_stone","fill -40 4 -5 40 15 -3 minecraft:oak_leaves","fill -40 4 2 40 15 4 minecraft:glass","fill -40 4 9 40 12 11 minecraft:oak_fence","fill -40 4 16 40 12 18 minecraft:iron_bars","fill -40 4 23 40 12 25 minecraft:cobblestone_wall","fill -40 4 30 40 10 32 minecraft:stone_stairs","fill -40 4 37 40 8 39 minecraft:oak_trapdoor",
         "fill 112 3 -48 208 3 48 minecraft:smooth_stone","fill 120 4 -5 200 20 -3 minecraft:stone","fill 136 8 -5 143 14 -3 minecraft:air","fill 160 8 -5 167 14 -3 minecraft:air","fill 184 8 -5 191 14 -3 minecraft:air","fill 132 4 22 188 9 24 minecraft:barrel",
-        "fill 272 3 -48 368 3 48 minecraft:smooth_stone","fill 280 4 3 360 10 5 minecraft:glass","fill 280 4 10 360 12 12 minecraft:oak_leaves","fill 280 4 17 360 10 19 minecraft:iron_bars","fill 288 4 27 352 9 29 minecraft:barrel","fill 288 4 35 352 8 37 minecraft:oak_fence"]
+        "fill 272 3 -48 368 3 48 minecraft:smooth_stone","fill 280 4 3 360 10 5 minecraft:glass","fill 280 4 10 360 12 12 minecraft:oak_leaves","fill 280 4 17 360 10 19 minecraft:iron_bars","fill 288 4 35 352 8 37 minecraft:oak_fence"]
     for c in commands: cmd(c)
+
+    # BBE-relevant block-entity stress. Better Block Entities explicitly optimizes
+    # chests, shulker boxes, signs, decorated pots, bells, beds and related renderers.
+    # Keep them spaced to avoid double-chest state changes and preserve a repeatable scene.
+    for x in range(288, 353, 4):
+        for z in (27, 31, 35, 39):
+            cmd(f"setblock {x} 4 {z} minecraft:chest", .02)
+            cmd(f"setblock {x} 5 {z} minecraft:shulker_box", .02)
+            cmd(f"setblock {x} 6 {z} minecraft:decorated_pot", .02)
+    for x in range(290, 351, 6):
+        cmd(f"setblock {x} 4 43 minecraft:oak_sign", .02)
+        cmd(f"setblock {x} 4 47 minecraft:bell", .02)
+
     for x in range(126,199,6):
         for z in range(4,33,4): cmd(f"summon minecraft:cow {x} 4 {z} {{NoAI:1b,Silent:1b,Invulnerable:1b,PersistenceRequired:1b}}",.02)
     for x in range(286,359,8):
@@ -206,5 +219,5 @@ def build_world(java: Path, cfg: dict[str, Any], accept_eula: bool, rebuild: boo
     try: p.wait(timeout=30)
     except subprocess.TimeoutExpired: p.kill()
     out.close(); safe_rmtree(WORLD_TEMPLATE); shutil.copytree(worldgen / "benchworld", WORLD_TEMPLATE)
-    (WORLD_TEMPLATE / ".objectbench-v3").write_text("controlled world v3\n")
+    (WORLD_TEMPLATE / ".objectbench-v4").write_text("controlled world v4: BBE block-entity stress\n")
     log(f"[world] Built {WORLD_TEMPLATE}")
