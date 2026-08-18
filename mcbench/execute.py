@@ -56,13 +56,7 @@ def write_options(cfg: dict[str, Any]) -> None:
 
 
 def write_super_resolution_config(selected: dict[str, Any]) -> Path | None:
-    """Write the upstream Super Resolution config for one isolated profile.
-
-    Upstream stores it at config/super_resolution/config.toml. We intentionally
-    write it before each launch so a previous profile cannot leak into the next.
-    The libraries directory is preserved because some algorithms extract native
-    resources there and deleting it would make repeated runs measure setup work.
-    """
+    """Write the upstream Super Resolution config for one isolated profile."""
     sr = selected.get("super_resolution")
     path = GAME / "config" / "super_resolution" / "config.toml"
     if not sr or not sr.get("installed"):
@@ -125,6 +119,30 @@ generate_motion_vectors = false
     return path
 
 
+def write_render_scale_config(selected: dict[str, Any]) -> Path | None:
+    """Write RenderScale's AutoConfig/Jankson config for a raw-scale control.
+
+    Upstream uses @Config(name="renderscale") with JanksonConfigSerializer, so
+    the deterministic path is config/renderscale.json5. Its own experimental
+    FSR switch stays disabled: these profiles intentionally measure raw scaling.
+    """
+    rs = selected.get("render_scale")
+    path = GAME / "config" / "renderscale.json5"
+    if not rs or not rs.get("installed"):
+        path.unlink(missing_ok=True)
+        return None
+    path.parent.mkdir(parents=True, exist_ok=True)
+    scale = float(rs.get("render_scale", 1.0))
+    text = json.dumps({
+        "scale": scale,
+        "forceLinear": bool(rs.get("force_linear", False)),
+        "fsr": False,
+        "irisScale": -1.0,
+    }, indent=2)
+    path.write_text(text + "\n", encoding="utf-8")
+    return path
+
+
 def super_resolution_proof(selected: dict[str, Any], log_text: str) -> dict[str, Any] | None:
     sr = selected.get("super_resolution")
     if not sr:
@@ -140,6 +158,30 @@ def super_resolution_proof(selected: dict[str, Any], log_text: str) -> dict[str,
         "algorithm_initialized": init_ok,
         "algorithm_init_failed": init_failed,
         "proven": (not installed) or (mod_loaded and (not enabled or (init_ok and not init_failed))),
+    }
+
+
+def render_scale_proof(selected: dict[str, Any], log_text: str) -> dict[str, Any] | None:
+    rs = selected.get("render_scale")
+    if not rs:
+        return None
+    path = GAME / "config" / "renderscale.json5"
+    mod_loaded = "renderscale" in log_text.lower()
+    config_ok = False
+    configured_scale = None
+    try:
+        parsed = json.loads(path.read_text(encoding="utf-8"))
+        configured_scale = float(parsed.get("scale"))
+        config_ok = abs(configured_scale - float(rs.get("render_scale", 1.0))) < 1e-5 and parsed.get("fsr") is False
+    except Exception:
+        pass
+    return {
+        **rs,
+        "mod_loaded": mod_loaded,
+        "config_path": "config/renderscale.json5",
+        "configured_scale": configured_scale,
+        "config_proven": config_ok,
+        "proven": bool(rs.get("installed")) and mod_loaded and config_ok,
     }
 
 
@@ -174,7 +216,8 @@ def launch_one(config_id: str, backend: str, rep: int, cfg: dict[str, Any], run_
                manifest: dict[str, Any], objectbench: Path, java: Path) -> dict[str, Any]:
     tag=f"{config_id}__{backend}__r{rep}"; log(f"\n=== {tag} ===")
     selected=next(c for c in cfg["configs"] if c["id"]==config_id)
-    files=install_selected_mods(manifest,cfg["base_mods"],selected,objectbench); write_options(cfg); write_super_resolution_config(selected)
+    files=install_selected_mods(manifest,cfg["base_mods"],selected,objectbench); write_options(cfg)
+    write_super_resolution_config(selected); write_render_scale_config(selected)
     patch_version_json(find_fabric_json(cfg["minecraft_version"]),backend)
     save=GAME/"saves"/"benchworld"; safe_rmtree(save); save.parent.mkdir(parents=True,exist_ok=True); shutil.copytree(WORLD_TEMPLATE,save)
     result=GAME/"objectbench-result.json"; result.unlink(missing_ok=True)
@@ -205,16 +248,21 @@ def launch_one(config_id: str, backend: str, rep: int, cfg: dict[str, Any], run_
                 time.sleep(.5)
         txt=log_path.read_text(errors="ignore") if log_path.exists() else ""
         sr_proof=super_resolution_proof(selected,txt)
+        rs_proof=render_scale_proof(selected,txt)
         if valid and result.exists() and sr_proof is not None and not sr_proof.get("proven"):
             return {"config":config_id,"label":selected["label"],"backend":backend,"rep":rep,"status":"invalid","reason":"super_resolution_not_proven",
-                    "mods":files,"super_resolution":sr_proof,"process_metrics":{"peak_rss_mb":round(peak_rss_mb,3)},"log_tail":txt[-4000:]}
+                    "mods":files,"super_resolution":sr_proof,"render_scale":rs_proof,"process_metrics":{"peak_rss_mb":round(peak_rss_mb,3)},"log_tail":txt[-4000:]}
+        if valid and result.exists() and rs_proof is not None and not rs_proof.get("proven"):
+            return {"config":config_id,"label":selected["label"],"backend":backend,"rep":rep,"status":"invalid","reason":"render_scale_not_proven",
+                    "mods":files,"super_resolution":sr_proof,"render_scale":rs_proof,"process_metrics":{"peak_rss_mb":round(peak_rss_mb,3)},"log_tail":txt[-4000:]}
         if valid and result.exists():
             peak_rss_mb=max(peak_rss_mb,process_tree_rss_mb(proc.pid))
             data=json.loads(result.read_text(encoding="utf-8")); data.update({"config":config_id,"label":selected["label"],"backend":backend,"rep":rep,"backend_proven":True,"mods":files,
                 "process_metrics":{"peak_rss_mb":round(peak_rss_mb,3)}})
             if sr_proof is not None: data["super_resolution"]=sr_proof
+            if rs_proof is not None: data["render_scale"]=rs_proof
             raw=run_dir/"runs"/f"{tag}.json"; raw.parent.mkdir(parents=True,exist_ok=True); raw.write_text(json.dumps(data,indent=2),encoding="utf-8"); return data
         return {"config":config_id,"label":selected["label"],"backend":backend,"rep":rep,"status":"invalid","reason":reason,"mods":files,
-                "super_resolution":sr_proof,"process_metrics":{"peak_rss_mb":round(peak_rss_mb,3)},"log_tail":txt[-4000:]}
+                "super_resolution":sr_proof,"render_scale":rs_proof,"process_metrics":{"peak_rss_mb":round(peak_rss_mb,3)},"log_tail":txt[-4000:]}
     finally:
         kill_process_tree(proc); out.close(); time.sleep(float(b["cooldown_seconds"]))
