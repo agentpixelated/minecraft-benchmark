@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import sys
 import time
+import urllib.parse
 import urllib.request
 from pathlib import Path
 from typing import Any
@@ -19,7 +20,7 @@ MOD_CACHE = CACHE / "mods"
 BUILD_CACHE = CACHE / "objectbench"
 WORLD_TEMPLATE = CACHE / "world-template"
 RESULTS = ROOT / "results"
-USER_AGENT = "minecraft-sodium-opengl-vulkan-benchmark/1.0"
+USER_AGENT = "agentpixelated/minecraft-benchmark/1.1"
 SCENES = ["overall", "geometry_transparency", "occlusion_entities", "mixed_block_entities"]
 
 
@@ -27,8 +28,19 @@ def log(msg: str) -> None:
     print(msg, flush=True)
 
 
+def request_headers(url: str) -> dict[str, str]:
+    headers = {"User-Agent": USER_AGENT}
+    token = os.environ.get("MODRINTH_TOKEN", "").strip()
+    host = (urllib.parse.urlparse(url).hostname or "").lower()
+    # Never leak credentials to download/CDN or unrelated hosts. Authentication is
+    # attached only to Modrinth's API host and the token itself is never logged.
+    if token and host == "api.modrinth.com":
+        headers["Authorization"] = token
+    return headers
+
+
 def request_json(url: str) -> Any:
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    req = urllib.request.Request(url, headers=request_headers(url))
     with urllib.request.urlopen(req, timeout=45) as r:
         return json.load(r)
 
@@ -36,7 +48,7 @@ def request_json(url: str) -> Any:
 def download(url: str, dst: Path) -> Path:
     dst.parent.mkdir(parents=True, exist_ok=True)
     tmp = dst.with_suffix(dst.suffix + ".part")
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    req = urllib.request.Request(url, headers=request_headers(url))
     with urllib.request.urlopen(req, timeout=90) as r, tmp.open("wb") as f:
         shutil.copyfileobj(r, f)
     tmp.replace(dst)
