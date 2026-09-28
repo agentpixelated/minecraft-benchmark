@@ -1,17 +1,11 @@
-name: Render Manim Integral
+name: Render Linear Drag Solution
 
 on:
   push:
     branches:
       - manim-integral-demo
     paths:
-      - integral_x2_manim.py
-      - .github/workflows/render-manim.yml
-  pull_request:
-    branches:
-      - main
-    paths:
-      - integral_x2_manim.py
+      - gaya_hambat_visual.py
       - .github/workflows/render-manim.yml
   workflow_dispatch:
 
@@ -24,14 +18,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Render animation
-        run: manim -qh integral_x2_manim.py IntegralXSquared
+        run: manim -qh gaya_hambat_visual.py DragForceSolution
       - name: Verify output
         run: |
-          test -f media/videos/integral_x2_manim/1080p60/IntegralXSquared.mp4
-          ls -lh media/videos/integral_x2_manim/1080p60/IntegralXSquared.mp4
+          test -f media/videos/gaya_hambat_visual/1080p60/DragForceSolution.mp4
+          ls -lh media/videos/gaya_hambat_visual/1080p60/DragForceSolution.mp4
       - name: Upload MP4
         uses: actions/upload-artifact@v4
         with:
-          name: integral-x2-manim
-          path: media/videos/integral_x2_manim/1080p60/IntegralXSquared.mp4
+          name: linear-drag-solution-manim
+          path: media/videos/gaya_hambat_visual/1080p60/DragForceSolution.mp4
           if-no-files-found: error
