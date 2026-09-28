@@ -7,6 +7,12 @@ on:
     paths:
       - integral_derivative_slow.py
       - .github/workflows/render-manim.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - integral_derivative_slow.py
+      - .github/workflows/render-manim.yml
   workflow_dispatch:
 
 jobs:
