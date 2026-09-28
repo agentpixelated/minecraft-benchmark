@@ -147,9 +147,9 @@ class DragForceSolution(Scene):
             MathTex(r"v(0)=0"),
             MathTex(r"v(t)=\frac{F}{C}\left(1-e^{-Ct/m}\right)"),
         )
-        equations.arrange(DOWN, aligned_edge=LEFT, buff=0.33)
-        equations.scale(0.82)
-        equations.next_to(eq_head, DOWN, buff=0.38)
+        equations.arrange(DOWN, aligned_edge=LEFT, buff=0.24)
+        equations.scale(0.70)
+        equations.next_to(eq_head, DOWN, buff=0.30)
 
         self.play(Write(title), Create(left_panel), Create(right_panel))
         self.play(Write(phase_label), Write(eq_head))
@@ -215,9 +215,9 @@ class DragForceSolution(Scene):
             MathTex(r"\frac{v_{\max}}{v_{\infty}}=98.2\%"),
             Text("Kecepatan mendekati batas", font_size=22),
             Text("secara eksponensial.", font_size=22),
-        ).arrange(DOWN, aligned_edge=LEFT, buff=0.28)
-        info.scale(0.9)
-        info.next_to(info_head, DOWN, buff=0.38)
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.22)
+        info.scale(0.80)
+        info.next_to(info_head, DOWN, buff=0.30)
 
         self.play(Write(title))
         self.play(Create(axes), FadeIn(x_label, y_label), Create(info_panel))
