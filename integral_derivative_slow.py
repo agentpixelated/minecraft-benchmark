@@ -67,15 +67,22 @@ class IntegralAndDerivativeSlow(Scene):
                 radius=0.08,
             )
         )
-        tan = always_redraw(
-            lambda: axes.get_tangent_line(
-                x_tracker.get_value(),
-                graph,
-                length=3.2,
+        def tangent_line():
+            x0 = x_tracker.get_value()
+            slope = 2 * x0
+            half_width = 0.75
+            x1 = x0 - half_width
+            x2 = x0 + half_width
+            y1 = x0**2 + slope * (x1 - x0)
+            y2 = x0**2 + slope * (x2 - x0)
+            return Line(
+                axes.c2p(x1, y1),
+                axes.c2p(x2, y2),
                 color=DERIV,
                 stroke_width=5,
             )
-        )
+
+        tan = always_redraw(tangent_line)
         x_line = always_redraw(
             lambda: DashedLine(
                 axes.c2p(x_tracker.get_value(), 0),
