@@ -7,6 +7,12 @@ on:
     paths:
       - gaya_hambat_visual.py
       - .github/workflows/render-manim.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - gaya_hambat_visual.py
+      - .github/workflows/render-manim.yml
   workflow_dispatch:
 
 jobs:
