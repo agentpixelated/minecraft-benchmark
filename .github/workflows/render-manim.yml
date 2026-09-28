@@ -1,17 +1,11 @@
-name: Render Linear Drag Solution
+name: Render Slow Integral Derivative
 
 on:
   push:
     branches:
       - manim-integral-demo
     paths:
-      - gaya_hambat_visual.py
-      - .github/workflows/render-manim.yml
-  pull_request:
-    branches:
-      - main
-    paths:
-      - gaya_hambat_visual.py
+      - integral_derivative_slow.py
       - .github/workflows/render-manim.yml
   workflow_dispatch:
 
@@ -24,14 +18,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Render animation
-        run: manim -qh gaya_hambat_visual.py DragForceSolution
+        run: manim -qh integral_derivative_slow.py IntegralAndDerivativeSlow
       - name: Verify output
         run: |
-          test -f media/videos/gaya_hambat_visual/1080p60/DragForceSolution.mp4
-          ls -lh media/videos/gaya_hambat_visual/1080p60/DragForceSolution.mp4
+          test -f media/videos/integral_derivative_slow/1080p60/IntegralAndDerivativeSlow.mp4
+          ls -lh media/videos/integral_derivative_slow/1080p60/IntegralAndDerivativeSlow.mp4
       - name: Upload MP4
         uses: actions/upload-artifact@v4
         with:
-          name: linear-drag-solution-manim
-          path: media/videos/gaya_hambat_visual/1080p60/DragForceSolution.mp4
+          name: integral-derivative-slow
+          path: media/videos/integral_derivative_slow/1080p60/IntegralAndDerivativeSlow.mp4
           if-no-files-found: error
