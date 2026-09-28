@@ -7,6 +7,12 @@ on:
     paths:
       - integral_x2_manim.py
       - .github/workflows/render-manim.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - integral_x2_manim.py
+      - .github/workflows/render-manim.yml
   workflow_dispatch:
 
 jobs:
