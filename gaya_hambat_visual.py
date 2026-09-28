@@ -249,22 +249,18 @@ class DragForceSolution(Scene):
             MathTex(r"\frac{Cv_{\max}}{F}=1-e^{-Ct_1/m}"),
             MathTex(r"e^{-Ct_1/m}=1-\frac{Cv_{\max}}{F}"),
             MathTex(r"t_1=-\frac{m}{C}\ln\left(1-\frac{Cv_{\max}}{F}\right)"),
-        ).arrange(DOWN, aligned_edge=LEFT, buff=0.34)
-        eqs.scale(0.84)
-        eqs.next_to(head, DOWN, buff=0.4)
+            MathTex(
+                r"t_1=-\frac{2.5}{2}\ln\left(1-\frac{(2)(4.91)}{10}\right)"
+                r"\approx 5.02\ \mathrm{s}"
+            ),
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.22)
+        eqs.scale(0.68)
+        eqs.next_to(head, DOWN, buff=0.28)
 
         self.play(Write(title), Create(panel), Write(head))
         for eq in eqs:
             self.play(Write(eq), run_time=0.9)
             self.wait(0.65)
-
-        numeric = MathTex(
-            r"t_1=-\frac{2.5}{2}\ln\left(1-\frac{(2)(4.91)}{10}\right)"
-            r"\approx 5.02\ \mathrm{s}"
-        ).scale(0.82)
-        numeric.next_to(eqs, DOWN, buff=0.55)
-
-        self.play(Write(numeric), run_time=1.2)
         self.wait(2.0)
 
         self.clear_scene()
@@ -353,9 +349,9 @@ class DragForceSolution(Scene):
             MathTex(r"\ln\left(\frac12\right)=-\frac{Ct_2}{m}"),
             MathTex(r"t_2=\frac{m}{C}\ln 2"),
             MathTex(r"t_2=\frac{2.5}{2}\ln 2\approx 0.866\ \mathrm{s}"),
-        ).arrange(DOWN, aligned_edge=LEFT, buff=0.32)
-        eqs.scale(0.82)
-        eqs.next_to(head, DOWN, buff=0.38)
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.21)
+        eqs.scale(0.68)
+        eqs.next_to(head, DOWN, buff=0.26)
 
         self.play(Write(title), Create(panel), Write(head))
         for eq in eqs:
