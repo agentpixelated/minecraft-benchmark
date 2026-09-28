@@ -169,7 +169,7 @@ class DragForceSolution(Scene):
         # ------------------------------------------------------------
         # 3) Understand phase 1 before solving t1
         # ------------------------------------------------------------
-        title = self.section_title("Mengapa mencapai 4.91 m/s membutuhkan waktu cukup lama?")
+        title = self.section_title("Fase 1 — mendekati kecepatan terminal")
 
         axes = Axes(
             x_range=[0, 5.5, 1],
@@ -314,9 +314,9 @@ class DragForceSolution(Scene):
 
         tau_note = Text(
             "τ dihitung mulai saat dorongan dihentikan.",
-            font_size=21,
+            font_size=20,
         )
-        tau_note.next_to(equations, DOWN, buff=0.48)
+        tau_note.move_to(right_panel.get_bottom() + UP * 0.38)
 
         self.play(Write(title), Create(left_panel), Create(right_panel))
         self.play(Write(phase_label), Write(eq_head))
