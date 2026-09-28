@@ -28,6 +28,8 @@ class IntegralAndDerivativeSlow(Scene):
             subtitle.animate.scale(0.72).next_to(title, DOWN, buff=0.12),
             run_time=1.6,
         )
+        self.wait(1.0)
+        self.play(FadeOut(subtitle), run_time=0.8)
 
         axes = Axes(
             x_range=[-0.5, 3.2, 0.5],
@@ -160,7 +162,7 @@ class IntegralAndDerivativeSlow(Scene):
             corner_radius=0.16,
             stroke_color=AREA,
         )
-        area_box.move_to(RIGHT * 3.7 + DOWN * 0.05)
+        area_box.move_to(RIGHT * 3.7 + DOWN * 0.20)
         self.play(Create(area_box), run_time=1.2)
 
         rects1 = axes.get_riemann_rectangles(
@@ -195,7 +197,7 @@ class IntegralAndDerivativeSlow(Scene):
             Text("Mulai dari pendekatan luas", color=TEXT, font_size=23),
             MathTex(r"\sum f(x_i)\,\Delta x", color=AREA).scale(0.95),
         ).arrange(DOWN, buff=0.18)
-        riemann_text.move_to(RIGHT * 3.7 + UP * 1.15)
+        riemann_text.move_to(RIGHT * 3.7 + UP * 0.95)
 
         self.play(FadeIn(riemann_text), run_time=1.4)
         self.play(FadeIn(rects1), run_time=1.8)
