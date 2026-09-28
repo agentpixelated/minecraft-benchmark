@@ -20,8 +20,8 @@ def make_panel(width, height, title_text):
         fill_color="#171a22",
         fill_opacity=0.97,
     )
-    title = Text(title_text, font_size=26, weight=BOLD)
-    title.next_to(box.get_top(), DOWN, buff=0.18)
+    title = Text(title_text, font_size=24, weight=BOLD)
+    title.next_to(box.get_top(), DOWN, buff=0.12)
     return VGroup(box, title)
 
 
@@ -189,25 +189,26 @@ class LinearDragSolution(Scene):
 
         # Equations right panel. Separate lines, no crowding.
         eqs1 = VGroup(
-            MathTex(r"m\frac{dv}{dt}=F-Cv", font_size=31),
-            MathTex(r"\frac{dv}{F-Cv}=\frac{dt}{m}", font_size=31),
+            MathTex(r"m\frac{dv}{dt}=F-Cv", font_size=28),
+            MathTex(r"\frac{dv}{F-Cv}=\frac{dt}{m}", font_size=28),
             MathTex(
                 r"v(t)=\frac{F}{C}\left(1-e^{-Ct/m}\right)",
-                font_size=31,
+                font_size=28,
             ),
             MathTex(
                 r"4.91=5\left(1-e^{-0.8t_1}\right)",
-                font_size=31,
+                font_size=28,
             ),
-            MathTex(r"e^{-0.8t_1}=0.018", font_size=31),
+            MathTex(r"e^{-0.8t_1}=0.018", font_size=28),
             MathTex(
                 r"t_1=\frac{-\ln(0.018)}{0.8}=5.02\,\mathrm s",
-                font_size=31,
+                font_size=28,
                 color=YELLOW,
             ),
-        ).arrange(DOWN, aligned_edge=LEFT, buff=0.31)
-        fit_width(eqs1, 5.75)
-        eqs1.move_to(right_panel[0].get_center() + DOWN * 0.15)
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.22)
+        fit_width(eqs1, 5.40)
+        eqs1.next_to(right_panel[1], DOWN, buff=0.42)
+        eqs1.set_x(right_panel[0].get_center()[0])
 
         for eq in eqs1:
             self.play(Write(eq), run_time=0.55)
@@ -333,21 +334,22 @@ class LinearDragSolution(Scene):
         self.play(Create(marker2), FadeIn(dot2, p2_label))
 
         eqs2 = VGroup(
-            MathTex(r"m\frac{dv}{dt}=-Cv", font_size=31),
-            MathTex(r"v(t')=v_{\max}e^{-Ct'/m}", font_size=31),
+            MathTex(r"m\frac{dv}{dt}=-Cv", font_size=28),
+            MathTex(r"v(t')=v_{\max}e^{-Ct'/m}", font_size=28),
             MathTex(
                 r"\frac12v_{\max}=v_{\max}e^{-0.8t_2}",
-                font_size=31,
+                font_size=28,
             ),
-            MathTex(r"\frac12=e^{-0.8t_2}", font_size=31),
+            MathTex(r"\frac12=e^{-0.8t_2}", font_size=28),
             MathTex(
                 r"t_2=\frac{\ln 2}{0.8}=0.866\,\mathrm s",
-                font_size=31,
+                font_size=28,
                 color=YELLOW,
             ),
-        ).arrange(DOWN, aligned_edge=LEFT, buff=0.38)
-        fit_width(eqs2, 5.75)
-        eqs2.move_to(right_panel[0].get_center() + DOWN * 0.1)
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.28)
+        fit_width(eqs2, 5.40)
+        eqs2.next_to(right_panel[1], DOWN, buff=0.46)
+        eqs2.set_x(right_panel[0].get_center()[0])
 
         for eq in eqs2:
             self.play(Write(eq), run_time=0.58)
