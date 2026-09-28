@@ -208,15 +208,17 @@ class IntegralAndDerivativeSlow(Scene):
         self.wait(1.4)
         self.play(FadeOut(rects3), FadeIn(area), run_time=1.6)
         self.wait(1.5)
+        self.play(FadeOut(riemann_text), run_time=0.9)
+        self.wait(0.6)
 
         integral_steps = VGroup(
             MathTex(r"\int_0^2 x^2\,dx", color=TEXT),
             MathTex(r"=\left[\frac{x^3}{3}\right]_0^2", color=ACCENT),
             MathTex(r"=\frac{2^3}{3}-0", color=ACCENT),
             MathTex(r"=\frac{8}{3}", color=AREA).scale(1.05),
-        ).arrange(DOWN, aligned_edge=LEFT, buff=0.2)
-        integral_steps.scale(0.86)
-        integral_steps.move_to(RIGHT * 3.7 + DOWN * 0.35)
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.14)
+        integral_steps.scale(0.70)
+        integral_steps.move_to(RIGHT * 3.7 + DOWN * 0.18)
 
         for step in integral_steps:
             self.play(Write(step), run_time=1.7)
@@ -230,7 +232,6 @@ class IntegralAndDerivativeSlow(Scene):
 
         self.play(
             FadeOut(area_box),
-            FadeOut(riemann_text),
             FadeOut(result_box),
             *[FadeOut(mob) for mob in integral_steps],
             FadeOut(integ_title),
