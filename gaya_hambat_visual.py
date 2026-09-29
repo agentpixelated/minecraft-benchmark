@@ -161,44 +161,60 @@ class LinearDragDeepDive(Scene):
         # ==========================================================
         # 2. SEPARATE VARIABLES
         # ==========================================================
-        title = self.title("2. Pisahkan v dan t", PURPLE)
+        title = self.title("2. Pisahkan v dan t dengan operasi yang sama", PURPLE)
         self.play(Write(title), run_time=1.3)
 
-        start = MathTex(r"F-Cv=m\frac{dv}{dt}", color=WHITE).scale(1.15).move_to(UP*1.55)
-        self.color_math(start)
-        self.play(Write(start), run_time=1.5)
+        eq = MathTex(r"F-Cv=m\\frac{dv}{dt}", color=WHITE).scale(1.22).move_to(UP*1.45)
+        self.color_math(eq)
+        self.play(Write(eq), run_time=1.5)
         self.wait(1.2)
 
-        step1 = MathTex(
-            r"\frac{1}{F-Cv}\left(F-Cv\right)"
-            r"=\frac{1}{F-Cv}m\frac{dv}{dt}",
+        divide_left = MathTex(r"\\div(F-Cv)", color=RED).scale(0.82).move_to(LEFT*3.7+UP*0.2)
+        divide_right = divide_left.copy().move_to(RIGHT*3.7+UP*0.2)
+        caption = Text("bagi KEDUA ruas dengan (F − Cv)", font_size=23, color=GREY).move_to(UP*0.25)
+        self.play(FadeIn(caption), FadeIn(divide_left), FadeIn(divide_right), run_time=1.0)
+        self.wait(1.0)
+
+        eq_div = MathTex(
+            r"1=\\frac{m}{F-Cv}\\frac{dv}{dt}",
             color=WHITE
-        ).scale(0.82).move_to(UP*0.45)
-        self.color_math(step1)
-        self.play(Write(step1), run_time=1.8)
-        self.wait(1.3)
+        ).scale(1.15).move_to(DOWN*0.65)
+        self.color_math(eq_div)
+        self.play(
+            TransformMatchingTex(eq.copy(), eq_div),
+            FadeOut(divide_left), FadeOut(divide_right), FadeOut(caption),
+            run_time=1.7
+        )
+        self.wait(1.5)
 
-        step2 = MathTex(r"1=\frac{m}{F-Cv}\frac{dv}{dt}", color=WHITE).scale(0.95).move_to(DOWN*0.55)
-        self.color_math(step2)
-        self.play(TransformMatchingTex(step1.copy(), step2), run_time=1.5)
+        factor_left = MathTex(r"\\times\\frac{dt}{m}", color=TEAL).scale(0.88).move_to(LEFT*3.7+DOWN*1.7)
+        factor_right = factor_left.copy().move_to(RIGHT*3.7+DOWN*1.7)
+        caption2 = Text("kalikan KEDUA ruas dengan dt/m", font_size=23, color=GREY).move_to(DOWN*1.55)
+        self.play(FadeIn(caption2), FadeIn(factor_left), FadeIn(factor_right), run_time=1.0)
+        self.wait(1.0)
+
+        separated = MathTex(
+            r"\\frac{dv}{F-Cv}=\\frac{dt}{m}",
+            color=WHITE
+        ).scale(1.28).move_to(DOWN*0.55)
+        self.color_math(separated)
+        self.play(
+            ReplacementTransform(eq_div, separated),
+            FadeOut(factor_left), FadeOut(factor_right), FadeOut(caption2),
+            FadeOut(eq),
+            run_time=1.8
+        )
         self.wait(1.2)
 
-        sep = MathTex(r"\frac{dv}{F-Cv}=\frac{dt}{m}", color=WHITE).scale(1.15).move_to(DOWN*1.65)
-        self.color_math(sep)
-        self.play(Write(sep), run_time=1.7)
-
-        braces = VGroup(
-            Brace(sep[0][:5], DOWN, color=BLUE),
-            Brace(sep[0][6:], DOWN, color=TEAL)
+        left_tag = VGroup(
+            Underline(separated, color=BLUE, buff=0.12),
+            Text("semua yang memuat v di kiri", font_size=22, color=BLUE)
         )
-        labels = VGroup(
-            Text("ruas v", font_size=21, color=BLUE),
-            Text("ruas t", font_size=21, color=TEAL),
-        )
-        labels[0].next_to(braces[0], DOWN, buff=0.1)
-        labels[1].next_to(braces[1], DOWN, buff=0.1)
-        self.play(GrowFromCenter(braces[0]), GrowFromCenter(braces[1]), FadeIn(labels), run_time=1.2)
-        self.wait(2.4)
+        left_tag[1].next_to(separated, DOWN, buff=0.35)
+        time_tag = Text("semua yang memuat t di kanan", font_size=22, color=TEAL)
+        time_tag.next_to(left_tag[1], DOWN, buff=0.18)
+        self.play(Create(left_tag[0]), FadeIn(left_tag[1]), FadeIn(time_tag), run_time=1.2)
+        self.wait(2.6)
         self.wipe()
 
         # ==========================================================
@@ -296,46 +312,70 @@ class LinearDragDeepDive(Scene):
         # ==========================================================
         # 7. THE EULER / EXPONENTIAL STEP IN FULL DETAIL
         # ==========================================================
-        title=self.title("7. Langkah Euler: terapkan e^(·) pada KEDUA ruas", GREEN)
+        title=self.title("7. Terapkan fungsi eksponensial pada KEDUA ruas", GREEN)
         self.play(Write(title), run_time=1.4)
 
         base=MathTex(
-            r"\ln\left(\frac{F}{F-Cv}\right)=\frac{Ct}{m}",
+            r"\\ln\\left(\\frac{F}{F-Cv}\\right)",
+            "=",
+            r"\\frac{Ct}{m}",
             color=WHITE
-        ).scale(1.08).move_to(UP*1.85)
+        ).scale(1.18).move_to(UP*1.75)
         self.color_math(base)
-        self.play(Write(base), run_time=1.6)
-        self.wait(1.3)
+        self.play(Write(base), run_time=1.7)
+        self.wait(1.2)
 
-        warning=Text(
-            "Ini bukan 'mengalikan dengan e'. Kita menerapkan fungsi eksponensial.",
-            font_size=23, color=GREY
-        ).move_to(UP*0.85)
+        left_box=SurroundingRectangle(base[0], color=PURPLE, buff=0.15)
+        right_box=SurroundingRectangle(base[2], color=TEAL, buff=0.15)
+        self.play(Create(left_box), Create(right_box), run_time=1.0)
+
+        warning=VGroup(
+            Text("Bukan mengalikan dengan angka e.", font_size=24, color=GREY),
+            Text("Fungsi x ↦ eˣ diterapkan ke masing-masing ruas.", font_size=24, color=GREEN),
+        ).arrange(DOWN, buff=0.15).move_to(UP*0.5)
         self.play(FadeIn(warning), run_time=1.2)
-        self.wait(2.0)
+        self.wait(2.2)
 
-        opL=MathTex(r"e^{(\,\cdot\,)}", color=GREEN).scale(1.05).move_to(LEFT*2.5+DOWN*0.05)
-        opR=MathTex(r"e^{(\,\cdot\,)}", color=GREEN).scale(1.05).move_to(RIGHT*2.5+DOWN*0.05)
-        arrows=VGroup(
-            Arrow(opL.get_top(), base.get_left()+RIGHT*1.35+DOWN*0.22, color=GREEN, buff=0.08),
-            Arrow(opR.get_top(), base.get_right()+LEFT*1.15+DOWN*0.22, color=GREEN, buff=0.08),
-        )
-        self.play(FadeIn(opL), FadeIn(opR), GrowArrow(arrows[0]), GrowArrow(arrows[1]), run_time=1.4)
-        self.wait(1.6)
+        opL=MathTex(r"e^{(\\,\\cdot\\,)}", color=GREEN).scale(1.2).move_to(LEFT*2.65+DOWN*0.65)
+        opR=MathTex(r"e^{(\\,\\cdot\\,)}", color=GREEN).scale(1.2).move_to(RIGHT*2.65+DOWN*0.65)
+        op_caption=Text("operasi identik di kiri dan kanan", font_size=21, color=GREY).move_to(DOWN*1.45)
+        self.play(FadeIn(opL), FadeIn(opR), FadeIn(op_caption), run_time=1.1)
+
+        arrL=Arrow(opL.get_top(), left_box.get_bottom(), color=GREEN, stroke_width=5, buff=0.08)
+        arrR=Arrow(opR.get_top(), right_box.get_bottom(), color=GREEN, stroke_width=5, buff=0.08)
+        self.play(GrowArrow(arrL), GrowArrow(arrR), run_time=1.2)
+        self.wait(1.5)
 
         exp_both=MathTex(
-            r"e^{\,\ln\left(\frac{F}{F-Cv}\right)}"
-            r"="
-            r"e^{\,Ct/m}",
+            r"e^{\\,\\ln\\left(\\frac{F}{F-Cv}\\right)}",
+            "=",
+            r"e^{\\,Ct/m}",
             color=WHITE
-        ).scale(1.05).move_to(DOWN*1.0)
+        ).scale(1.08).move_to(DOWN*2.05)
         self.color_math(exp_both)
         self.play(Write(exp_both), run_time=2.0)
         self.wait(2.0)
 
-        inverse_rule=MathTex(r"e^{\ln z}=z\qquad(z>0)", color=GREEN).scale(0.88).to_edge(DOWN,buff=0.38)
-        self.play(Write(inverse_rule), run_time=1.5)
-        self.wait(2.3)
+        inverse_rule=MathTex(r"e^{\\ln z}=z", color=GREEN).scale(0.95).to_corner(DR).shift(LEFT*0.4+UP*0.2)
+        self.play(Write(inverse_rule), run_time=1.4)
+        self.play(Circumscribe(exp_both[0], color=GREEN, fade_out=True), run_time=1.6)
+        self.wait(2.0)
+
+        simplified=MathTex(
+            r"\\frac{F}{F-Cv}",
+            "=",
+            r"e^{Ct/m}",
+            color=WHITE
+        ).scale(1.18).move_to(DOWN*1.9)
+        self.color_math(simplified)
+        self.play(
+            TransformMatchingTex(exp_both, simplified),
+            FadeOut(opL), FadeOut(opR), FadeOut(arrL), FadeOut(arrR),
+            FadeOut(left_box), FadeOut(right_box), FadeOut(warning),
+            FadeOut(op_caption), FadeOut(inverse_rule), FadeOut(base),
+            run_time=1.8
+        )
+        self.wait(2.5)
         self.wipe()
 
         # ==========================================================
@@ -370,49 +410,55 @@ class LinearDragDeepDive(Scene):
         # ==========================================================
         # 9. AFTER EXPONENTIATING: EACH ALGEBRA STEP
         # ==========================================================
-        title=self.title("9. Setelah eksponensial diterapkan", GREEN)
+        title=self.title("9. Operasi yang sama tetap dilakukan pada kedua ruas", GREEN)
         self.play(Write(title), run_time=1.3)
 
-        e1=MathTex(
-            r"e^{\,\ln\left(\frac{F}{F-Cv}\right)}=e^{Ct/m}",
-            color=WHITE
-        ).scale(0.96).move_to(UP*2.0)
         e2=MathTex(
-            r"\frac{F}{F-Cv}=e^{Ct/m}",
+            r"\\frac{F}{F-Cv}=e^{Ct/m}",
             color=WHITE
-        ).scale(1.05).move_to(UP*1.15)
-        self.color_math(e1); self.color_math(e2)
-        self.play(Write(e1), run_time=1.5)
-        self.play(TransformMatchingTex(e1.copy(),e2), run_time=1.6)
+        ).scale(1.18).move_to(UP*1.75)
+        self.color_math(e2)
+        self.play(Write(e2), run_time=1.6)
         self.wait(1.2)
 
-        multiply_factor=MathTex(r"\times(F-Cv)", color=RED).scale(0.82).move_to(LEFT*4.5+UP*0.15)
-        multiply_factor2=multiply_factor.copy().move_to(RIGHT*4.5+UP*0.15)
-        msg=Text("kalikan kedua ruas dengan faktor yang sama", font_size=21, color=GREY).move_to(UP*0.25)
-        self.play(FadeIn(msg),FadeIn(multiply_factor),FadeIn(multiply_factor2),run_time=1.0)
+        factorL=MathTex(r"\\times(F-Cv)", color=RED).scale(1.0).move_to(LEFT*3.6+UP*0.55)
+        factorR=factorL.copy().move_to(RIGHT*3.6+UP*0.55)
+        equal_ops=Text("operasi kiri = operasi kanan", font_size=22, color=GREY).move_to(UP*0.35)
+        self.play(FadeIn(factorL), FadeIn(factorR), FadeIn(equal_ops), run_time=1.0)
+        self.play(
+            factorL.animate.move_to(LEFT*2.25+UP*1.0),
+            factorR.animate.move_to(RIGHT*2.25+UP*1.0),
+            run_time=1.3
+        )
         self.wait(1.0)
 
         e3=MathTex(
             r"F=(F-Cv)e^{Ct/m}",
             color=WHITE
-        ).scale(1.05).move_to(DOWN*0.65)
+        ).scale(1.12).move_to(DOWN*0.15)
         self.color_math(e3)
-        self.play(Write(e3),FadeOut(msg),FadeOut(multiply_factor),FadeOut(multiply_factor2),run_time=1.6)
-        self.wait(1.4)
+        self.play(
+            Write(e3), FadeOut(factorL), FadeOut(factorR), FadeOut(equal_ops),
+            run_time=1.6
+        )
+        self.wait(1.5)
 
-        expminus=MathTex(r"\times e^{-Ct/m}", color=GREEN).scale(0.8).move_to(LEFT*4.3+DOWN*1.55)
-        expminus2=expminus.copy().move_to(RIGHT*4.3+DOWN*1.55)
-        msg2=Text("sekarang kalikan kedua ruas dengan e^(-Ct/m)",font_size=21,color=GREY).to_edge(DOWN,buff=0.38)
-        self.play(FadeIn(msg2),FadeIn(expminus),FadeIn(expminus2),run_time=1.0)
-        self.wait(1.2)
+        factor2L=MathTex(r"\\times e^{-Ct/m}", color=GREEN).scale(0.95).move_to(LEFT*3.6+DOWN*1.15)
+        factor2R=factor2L.copy().move_to(RIGHT*3.6+DOWN*1.15)
+        why2=Text("kalikan kedua ruas dengan e⁻ᶜᵗ⁄ᵐ", font_size=22, color=GREY).move_to(DOWN*1.25)
+        self.play(FadeIn(factor2L), FadeIn(factor2R), FadeIn(why2), run_time=1.0)
+        self.wait(1.1)
 
         e4=MathTex(
             r"Fe^{-Ct/m}=F-Cv",
             color=WHITE
-        ).scale(1.05).move_to(DOWN*1.65)
+        ).scale(1.18).move_to(DOWN*2.0)
         self.color_math(e4)
-        self.play(Write(e4),FadeOut(msg2),FadeOut(expminus),FadeOut(expminus2),run_time=1.6)
-        self.wait(2.0)
+        self.play(
+            Write(e4), FadeOut(factor2L), FadeOut(factor2R), FadeOut(why2),
+            run_time=1.7
+        )
+        self.wait(2.3)
         self.wipe()
 
         title=self.title("10. Isolasi v", BLUE)
