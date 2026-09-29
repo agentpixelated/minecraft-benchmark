@@ -1,4 +1,4 @@
-name: Preview Deep Physics Drag Solution
+name: Render Final Deep Physics Drag Solution
 
 on:
   push:
@@ -23,15 +23,15 @@ jobs:
       options: --user 0
     steps:
       - uses: actions/checkout@v4
-      - name: Render preview
-        run: manim -qm gaya_hambat_visual.py LinearDragDeepDive
-      - name: Verify preview
+      - name: Render final 1080p60
+        run: manim -qh gaya_hambat_visual.py LinearDragDeepDive
+      - name: Verify final video
         run: |
-          test -f media/videos/gaya_hambat_visual/720p30/LinearDragDeepDive.mp4
-          ls -lh media/videos/gaya_hambat_visual/720p30/LinearDragDeepDive.mp4
-      - name: Upload preview
+          test -f media/videos/gaya_hambat_visual/1080p60/LinearDragDeepDive.mp4
+          ls -lh media/videos/gaya_hambat_visual/1080p60/LinearDragDeepDive.mp4
+      - name: Upload final MP4
         uses: actions/upload-artifact@v4
         with:
-          name: deep-physics-drag-preview
-          path: media/videos/gaya_hambat_visual/720p30/LinearDragDeepDive.mp4
+          name: deep-physics-drag-final-1080p60
+          path: media/videos/gaya_hambat_visual/1080p60/LinearDragDeepDive.mp4
           if-no-files-found: error
