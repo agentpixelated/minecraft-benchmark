@@ -23,17 +23,17 @@ class LinearDragDeepDive(Scene):
         # Inject LaTeX colors directly. This preserves fractions/derivatives while
         # keeping the same symbol the same color across every scene.
         palette = {
-            r"\\ln": "9A72AC",
-            r"\\tau": "5CD0B3",
+            r"\ln": "9A72AC",
+            r"\tau": "5CD0B3",
             "F": "FFFF00",
             "C": "FC6255",
             "v": "58C4DD",
         }
-        pattern = re.compile(r"(\\\\ln|\\\\tau|F|C|v)")
+        pattern = re.compile(r"(\\ln|\\tau|F|C|v)")
 
         def tint(source):
             return pattern.sub(
-                lambda match: r"{\\color[HTML]{"
+                lambda match: r"{\color[HTML]{"
                 + palette[match.group(0)]
                 + "}"
                 + match.group(0)
