@@ -1,6 +1,5 @@
 from manim import *
 import numpy as np
-import re
 
 # Visual language inspired by the educational principles of 3Blue1Brown:
 # dark field, semantic colors, minimal chrome, transformations instead of slides.
@@ -20,20 +19,7 @@ config.background_color = BG
 
 class LinearDragDeepDive(Scene):
     def M(self, *tex_strings, color=WHITE, **kwargs):
-        # Manim's {{...}} notation isolates semantic symbols without breaking
-        # surrounding fractions or derivatives.
-        pattern = re.compile(r"(\\ln|\\tau|F|C|v)")
-
-        def isolate(source):
-            return pattern.sub(lambda match: "{{" + match.group(0) + "}}", source)
-
-        mob = MathTex(*(isolate(x) for x in tex_strings), color=color, **kwargs)
-        mob.set_color_by_tex("F", YELLOW)
-        mob.set_color_by_tex("C", RED)
-        mob.set_color_by_tex("v", BLUE)
-        mob.set_color_by_tex(r"\ln", PURPLE)
-        mob.set_color_by_tex(r"\tau", TEAL)
-        return mob
+        return MathTex(*tex_strings, color=color, **kwargs)
 
     def color_math(self, mob):
         # Colors are isolated at construction time in M().
@@ -333,6 +319,8 @@ class LinearDragDeepDive(Scene):
             color=WHITE
         ).scale(1.18).move_to(UP*1.75)
         self.color_math(base)
+        base[0].set_color(PURPLE)
+        base[2].set_color(TEAL)
         self.play(Write(base), run_time=1.7)
         self.wait(1.2)
 
@@ -364,6 +352,8 @@ class LinearDragDeepDive(Scene):
             color=WHITE
         ).scale(1.08).move_to(DOWN*2.05)
         self.color_math(exp_both)
+        exp_both[0].set_color(GREEN)
+        exp_both[2].set_color(GREEN)
         self.play(Write(exp_both), run_time=2.0)
         self.wait(2.0)
 
@@ -379,6 +369,8 @@ class LinearDragDeepDive(Scene):
             color=WHITE
         ).scale(1.18).move_to(DOWN*1.9)
         self.color_math(simplified)
+        simplified[0].set_color(YELLOW)
+        simplified[2].set_color(GREEN)
         self.play(
             TransformMatchingTex(exp_both, simplified),
             FadeOut(opL), FadeOut(opR), FadeOut(arrL), FadeOut(arrR),
@@ -580,6 +572,7 @@ class LinearDragDeepDive(Scene):
             color=WHITE
         ).scale(1.05).move_to(UP*1.45)
         self.color_math(p2a)
+        p2a.set_color(PURPLE)
         self.play(Write(p2a),run_time=1.4)
 
         ops=VGroup(
@@ -594,6 +587,7 @@ class LinearDragDeepDive(Scene):
             color=WHITE
         ).scale(1.0).move_to(DOWN*0.05)
         self.color_math(p2b)
+        p2b.set_color(GREEN)
         self.play(Write(p2b),run_time=1.7)
         self.wait(1.3)
 
