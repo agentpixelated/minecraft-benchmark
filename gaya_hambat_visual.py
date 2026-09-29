@@ -1,31 +1,46 @@
 from manim import *
 import numpy as np
 
+# Colorful math-animation palette inspired by 3Blue1Brown's visual language.
+BG = "#0B0F14"
+BLUE = "#58C4DD"       # velocity / curves
+YELLOW = "#F4D35E"     # applied force / derivative
+GREEN = "#6BCB77"      # integral / result
+PINK = "#FF6B9A"       # drag force
+PURPLE = "#C792EA"     # algebra transformations
+WHITE = "#E8EDF2"
+MUTED = "#AAB4C0"
+PANEL = "#263342"
 
-class DragForceSolution(Scene):
-    def clear_scene(self, wait=0.2):
-        if self.mobjects:
-            self.play(FadeOut(*self.mobjects), run_time=0.7)
-        self.wait(wait)
+config.background_color = BG
 
-    def section_title(self, text):
-        title = Text(text, font_size=38, weight=BOLD)
-        title.to_edge(UP, buff=0.35)
+
+class DragForceSlow(Scene):
+    def section_title(self, text, color=WHITE):
+        title = Text(text, font_size=35, color=color, weight=BOLD)
+        title.to_edge(UP, buff=0.28)
         return title
 
-    def make_panel(self, width, height, center):
-        panel = RoundedRectangle(
-            corner_radius=0.18,
+    def panel(self, width, height, center, color=PANEL):
+        p = RoundedRectangle(
             width=width,
             height=height,
-            stroke_width=1.5,
-            fill_opacity=0.04,
+            corner_radius=0.16,
+            stroke_color=color,
+            stroke_width=2,
+            fill_color=BG,
+            fill_opacity=0.25,
         )
-        panel.move_to(center)
-        return panel
+        p.move_to(center)
+        return p
+
+    def clear_scene(self, wait=0.4):
+        self.play(*[FadeOut(m) for m in self.mobjects], run_time=1.2)
+        self.wait(wait)
 
     def construct(self):
-        # Constants
+        self.camera.background_color = BG
+
         m = 2.5
         F = 10.0
         C = 2.0
@@ -36,424 +51,489 @@ class DragForceSolution(Scene):
         t2 = (m / C) * np.log(2)
         total = t1 + t2
 
-        # ------------------------------------------------------------
-        # 1) Read the problem without solving it yet
-        # ------------------------------------------------------------
-        title = Text("Balok dengan hambatan linear", font_size=42, weight=BOLD)
-        title.to_edge(UP, buff=0.4)
+        # ============================================================
+        # INTRO: READ BEFORE SOLVING
+        # ============================================================
+        title = Text("Balok dengan Hambatan Udara Linear", font_size=42, color=WHITE)
+        subtitle = MathTex(r"F_d=Cv", color=PINK).scale(1.25)
+        intro = VGroup(title, subtitle).arrange(DOWN, buff=0.35)
 
-        left_panel = self.make_panel(5.9, 4.7, LEFT * 3.35 + DOWN * 0.25)
-        right_panel = self.make_panel(6.2, 4.7, RIGHT * 3.1 + DOWN * 0.25)
-
-        data_head = Text("Data yang diberikan", font_size=27, weight=BOLD)
-        data_head.move_to(left_panel.get_top() + DOWN * 0.45)
+        self.play(Write(title), run_time=1.8)
+        self.play(Write(subtitle), run_time=1.4)
+        self.wait(2.0)
 
         data = VGroup(
-            MathTex(r"m=2.5\ \mathrm{kg}"),
-            MathTex(r"F=10\ \mathrm{N}"),
-            MathTex(r"C=2\ \mathrm{N\,s/m}"),
-            MathTex(r"v_{\max}=4.91\ \mathrm{m/s}"),
-        ).arrange(DOWN, aligned_edge=LEFT, buff=0.35)
-        data.scale(0.9)
-        data.next_to(data_head, DOWN, buff=0.45)
+            MathTex(r"m=2.5\ \mathrm{kg}", color=WHITE),
+            MathTex(r"F=10\ \mathrm N", color=YELLOW),
+            MathTex(r"C=2\ \mathrm{N\,s/m}", color=PINK),
+            MathTex(r"v_{\max}=4.91\ \mathrm{m/s}", color=BLUE),
+        ).arrange(RIGHT, buff=0.65).scale(0.72)
+        data.to_edge(DOWN, buff=0.65)
 
-        goal_head = Text("Apa yang sebenarnya dicari?", font_size=27, weight=BOLD)
-        goal_head.move_to(right_panel.get_top() + DOWN * 0.45)
-
-        goal1 = MathTex(r"T_{\mathrm{total}}=t_1+t_2").scale(1.05)
-        goal2 = Text(
-            "t₁: waktu selama masih didorong",
-            font_size=24,
-        )
-        goal3 = Text(
-            "t₂: waktu setelah gaya dorong dilepas",
-            font_size=24,
-        )
-        goal4 = MathTex(r"v:\ v_{\max}\longrightarrow \frac12 v_{\max}").scale(0.9)
-
-        goals = VGroup(goal1, goal2, goal3, goal4).arrange(
-            DOWN, aligned_edge=LEFT, buff=0.38
-        )
-        goals.next_to(goal_head, DOWN, buff=0.42)
-
-        self.play(Write(title))
-        self.play(Create(left_panel), Create(right_panel))
-        self.play(Write(data_head))
-        for item in data:
-            self.play(Write(item), run_time=0.7)
-            self.wait(0.25)
-        self.play(Write(goal_head))
-        for item in goals:
-            self.play(Write(item), run_time=0.75)
-            self.wait(0.3)
-
-        note = Text(
-            "Pisahkan gerak menjadi dua fase sebelum memasukkan angka.",
-            font_size=25,
-            slant=ITALIC,
-        )
-        note.to_edge(DOWN, buff=0.3)
-        self.play(FadeIn(note))
-        self.wait(2.0)
-
-        self.clear_scene()
-
-        # ------------------------------------------------------------
-        # 2) Phase 1: still pushed
-        # ------------------------------------------------------------
-        title = self.section_title("Fase 1 — balok masih didorong")
-
-        left_panel = self.make_panel(5.6, 5.4, LEFT * 3.6 + DOWN * 0.25)
-        right_panel = self.make_panel(7.0, 5.4, RIGHT * 3.0 + DOWN * 0.25)
-
-        phase_label = Text("Diagram gaya", font_size=26, weight=BOLD)
-        phase_label.move_to(left_panel.get_top() + DOWN * 0.45)
-
-        block = RoundedRectangle(
-            width=2.0, height=1.1, corner_radius=0.12, fill_opacity=0.12
-        )
-        block.move_to(left_panel.get_center() + DOWN * 0.25)
-        block_text = MathTex("m").move_to(block)
-
-        force_arrow = Arrow(
-            block.get_right(), block.get_right() + RIGHT * 1.65, buff=0.05
-        )
-        drag_arrow = Arrow(
-            block.get_left(), block.get_left() + LEFT * 1.65, buff=0.05
-        )
-        velocity_arrow = Arrow(
-            block.get_top() + UP * 0.6 + LEFT * 0.7,
-            block.get_top() + UP * 0.6 + RIGHT * 0.9,
-            buff=0.0,
-        )
-
-        force_text = MathTex("F").next_to(force_arrow, UP, buff=0.12)
-        drag_text = MathTex(r"F_d=Cv").next_to(drag_arrow, UP, buff=0.12)
-        velocity_text = MathTex("v").next_to(velocity_arrow, UP, buff=0.08)
-
-        physical_note = Text(
-            "Hambatan selalu melawan arah gerak.",
-            font_size=22,
-        )
-        physical_note.next_to(block, DOWN, buff=0.75)
-
-        eq_head = Text("Hukum II Newton", font_size=26, weight=BOLD)
-        eq_head.move_to(right_panel.get_top() + DOWN * 0.45)
-
-        equations = VGroup(
-            MathTex(r"\sum F_x=m\frac{dv}{dt}"),
-            MathTex(r"F-Cv=m\frac{dv}{dt}"),
-            MathTex(r"\frac{dv}{F-Cv}=\frac{dt}{m}"),
-            MathTex(r"v(0)=0"),
-            MathTex(r"v(t)=\frac{F}{C}\left(1-e^{-Ct/m}\right)"),
-        )
-        equations.arrange(DOWN, aligned_edge=LEFT, buff=0.24)
-        equations.scale(0.70)
-        equations.next_to(eq_head, DOWN, buff=0.30)
-
-        self.play(Write(title), Create(left_panel), Create(right_panel))
-        self.play(Write(phase_label), Write(eq_head))
-        self.play(Create(block), Write(block_text))
-        self.play(GrowArrow(force_arrow), Write(force_text))
-        self.play(GrowArrow(drag_arrow), Write(drag_text))
-        self.play(GrowArrow(velocity_arrow), Write(velocity_text))
-        self.play(FadeIn(physical_note))
-        self.wait(1.3)
-
-        for i, eq in enumerate(equations):
-            self.play(Write(eq), run_time=0.9)
-            self.wait(0.55 if i < 4 else 1.2)
-
-        self.clear_scene()
-
-        # ------------------------------------------------------------
-        # 3) Understand phase 1 before solving t1
-        # ------------------------------------------------------------
-        title = self.section_title("Fase 1 — mendekati kecepatan terminal")
-
-        axes = Axes(
-            x_range=[0, 5.5, 1],
-            y_range=[0, 5.5, 1],
-            x_length=7.7,
-            y_length=4.8,
-            tips=False,
-            axis_config={"include_numbers": True, "font_size": 22},
-        )
-        axes.shift(LEFT * 2.3 + DOWN * 0.4)
-        x_label = axes.get_x_axis_label(MathTex("t\ (s)").scale(0.8))
-        y_label = axes.get_y_axis_label(MathTex("v\ (m/s)").scale(0.8))
-
-        curve = axes.plot(
-            lambda t: vinf * (1 - np.exp(-k * t)),
-            x_range=[0, 5.3],
-        )
-
-        terminal_line = DashedLine(
-            axes.c2p(0, vinf),
-            axes.c2p(5.3, vinf),
-            stroke_width=2,
-        )
-        target_line = DashedLine(
-            axes.c2p(0, vmax),
-            axes.c2p(t1, vmax),
-            stroke_width=2,
-        )
-        time_line = DashedLine(
-            axes.c2p(t1, 0),
-            axes.c2p(t1, vmax),
-            stroke_width=2,
-        )
-        target_dot = Dot(axes.c2p(t1, vmax), radius=0.07)
-
-        info_panel = self.make_panel(4.6, 4.6, RIGHT * 4.15 + DOWN * 0.35)
-        info_head = Text("Makna grafik", font_size=25, weight=BOLD)
-        info_head.move_to(info_panel.get_top() + DOWN * 0.45)
-
-        info = VGroup(
-            MathTex(r"v_{\infty}=\frac{F}{C}=5.00\ \mathrm{m/s}"),
-            MathTex(r"v_{\max}=4.91\ \mathrm{m/s}"),
-            MathTex(r"\frac{v_{\max}}{v_{\infty}}=98.2\%"),
-            Text("Kecepatan mendekati batas", font_size=22),
-            Text("secara eksponensial.", font_size=22),
-        ).arrange(DOWN, aligned_edge=LEFT, buff=0.22)
-        info.scale(0.80)
-        info.next_to(info_head, DOWN, buff=0.30)
-
-        self.play(Write(title))
-        self.play(Create(axes), FadeIn(x_label, y_label), Create(info_panel))
-        self.play(Create(curve), run_time=1.6)
-        self.play(Create(terminal_line), run_time=0.7)
-        self.play(Write(info_head))
-        for item in info:
-            self.play(Write(item), run_time=0.65)
-        self.play(Create(target_line), Create(time_line), FadeIn(target_dot))
+        self.play(FadeIn(data, shift=UP*0.15), run_time=1.5)
         self.wait(2.2)
 
-        self.clear_scene()
-
-        # ------------------------------------------------------------
-        # 4) Solve t1 symbolically first
-        # ------------------------------------------------------------
-        title = self.section_title("Menentukan waktu fase 1")
-
-        panel = self.make_panel(11.8, 5.5, DOWN * 0.25)
-        head = Text(
-            "Gunakan v(t₁) = vₘₐₓ, lalu isolasi t₁",
-            font_size=26,
-            weight=BOLD,
+        phase_note = Text(
+            "Kunci: gerak terdiri dari dua fase yang persamaannya berbeda.",
+            font_size=25, color=MUTED
         )
-        head.move_to(panel.get_top() + DOWN * 0.45)
-
-        eqs = VGroup(
-            MathTex(r"v_{\max}=\frac{F}{C}\left(1-e^{-Ct_1/m}\right)"),
-            MathTex(r"\frac{Cv_{\max}}{F}=1-e^{-Ct_1/m}"),
-            MathTex(r"e^{-Ct_1/m}=1-\frac{Cv_{\max}}{F}"),
-            MathTex(r"t_1=-\frac{m}{C}\ln\left(1-\frac{Cv_{\max}}{F}\right)"),
-            MathTex(
-                r"t_1=-\frac{2.5}{2}\ln\left(1-\frac{(2)(4.91)}{10}\right)"
-                r"\approx 5.02\ \mathrm{s}"
-            ),
-        ).arrange(DOWN, aligned_edge=LEFT, buff=0.22)
-        eqs.scale(0.68)
-        eqs.next_to(head, DOWN, buff=0.28)
-
-        self.play(Write(title), Create(panel), Write(head))
-        for eq in eqs:
-            self.play(Write(eq), run_time=0.9)
-            self.wait(0.65)
-        self.wait(2.0)
-
+        phase_note.next_to(intro, DOWN, buff=0.75)
+        self.play(FadeIn(phase_note), run_time=1.3)
+        self.wait(2.8)
         self.clear_scene()
 
-        # ------------------------------------------------------------
-        # 5) Phase 2: push removed
-        # ------------------------------------------------------------
-        title = self.section_title("Fase 2 — gaya dorong sudah dilepas")
+        # ============================================================
+        # PHASE 1: FORCES + WHY dv/dt APPEARS
+        # ============================================================
+        title = self.section_title("Fase 1 — balok masih didorong", BLUE)
+        self.play(Write(title), run_time=1.5)
 
-        left_panel = self.make_panel(5.6, 5.4, LEFT * 3.6 + DOWN * 0.25)
-        right_panel = self.make_panel(7.0, 5.4, RIGHT * 3.0 + DOWN * 0.25)
-
-        phase_label = Text("Diagram gaya", font_size=26, weight=BOLD)
-        phase_label.move_to(left_panel.get_top() + DOWN * 0.45)
+        left = self.panel(5.5, 5.2, LEFT*3.7 + DOWN*0.2, BLUE)
+        right = self.panel(6.8, 5.2, RIGHT*3.1 + DOWN*0.2, YELLOW)
+        self.play(Create(left), Create(right), run_time=1.4)
 
         block = RoundedRectangle(
-            width=2.0, height=1.1, corner_radius=0.12, fill_opacity=0.12
+            width=2.0, height=1.1, corner_radius=0.12,
+            stroke_color=WHITE, fill_color=BLUE, fill_opacity=0.12
+        ).move_to(left.get_center()+DOWN*0.1)
+        block_text = MathTex("m", color=WHITE).move_to(block)
+
+        push = Arrow(block.get_right(), block.get_right()+RIGHT*1.55, color=YELLOW, buff=0.04)
+        drag = Arrow(block.get_left(), block.get_left()+LEFT*1.55, color=PINK, buff=0.04)
+        vel = Arrow(
+            block.get_top()+UP*0.72+LEFT*0.65,
+            block.get_top()+UP*0.72+RIGHT*0.9,
+            color=BLUE, buff=0
         )
-        block.move_to(left_panel.get_center() + DOWN * 0.15)
-        block_text = MathTex("m").move_to(block)
 
-        drag_arrow = Arrow(
-            block.get_left(), block.get_left() + LEFT * 1.75, buff=0.05
-        )
-        drag_text = MathTex(r"F_d=Cv").next_to(drag_arrow, UP, buff=0.12)
-        velocity_arrow = Arrow(
-            block.get_top() + UP * 0.6 + LEFT * 0.7,
-            block.get_top() + UP * 0.6 + RIGHT * 0.9,
-            buff=0.0,
-        )
-        velocity_text = MathTex("v").next_to(velocity_arrow, UP, buff=0.08)
+        self.play(Create(block), Write(block_text), run_time=1.0)
+        self.play(GrowArrow(push), Write(MathTex("F", color=YELLOW).next_to(push, UP, buff=0.1)), run_time=1.2)
+        self.wait(0.8)
+        self.play(GrowArrow(drag), Write(MathTex(r"Cv", color=PINK).next_to(drag, UP, buff=0.1)), run_time=1.2)
+        self.wait(0.8)
+        self.play(GrowArrow(vel), Write(MathTex("v", color=BLUE).next_to(vel, UP, buff=0.1)), run_time=1.2)
+        self.wait(1.4)
 
-        no_push = Text("Tidak ada lagi gaya F.", font_size=23)
-        no_push.next_to(block, DOWN, buff=0.78)
+        right_head = Text("Mengubah gaya menjadi persamaan gerak", font_size=23, color=YELLOW, weight=BOLD)
+        right_head.move_to(right.get_top()+DOWN*0.42)
+        self.play(Write(right_head), run_time=1.2)
 
-        eq_head = Text("Persamaan gerak", font_size=26, weight=BOLD)
-        eq_head.move_to(right_panel.get_top() + DOWN * 0.45)
-
-        equations = VGroup(
-            MathTex(r"m\frac{dv}{d\tau}=-Cv"),
-            MathTex(r"\frac{dv}{v}=-\frac{C}{m}\,d\tau"),
-            MathTex(r"v(0)=v_{\max}"),
-            MathTex(r"v(\tau)=v_{\max}e^{-C\tau/m}"),
-        ).arrange(DOWN, aligned_edge=LEFT, buff=0.4)
-        equations.scale(0.86)
-        equations.next_to(eq_head, DOWN, buff=0.45)
-
-        tau_note = Text(
-            "τ dihitung mulai saat dorongan dihentikan.",
-            font_size=20,
-        )
-        tau_note.move_to(right_panel.get_bottom() + UP * 0.38)
-
-        self.play(Write(title), Create(left_panel), Create(right_panel))
-        self.play(Write(phase_label), Write(eq_head))
-        self.play(Create(block), Write(block_text))
-        self.play(GrowArrow(drag_arrow), Write(drag_text))
-        self.play(GrowArrow(velocity_arrow), Write(velocity_text))
-        self.play(FadeIn(no_push))
+        n2 = MathTex(r"\sum F_x=ma", color=WHITE).scale(0.92)
+        n2.move_to(right.get_center()+UP*1.25)
+        self.play(Write(n2), run_time=1.5)
         self.wait(1.2)
 
-        for eq in equations:
-            self.play(Write(eq), run_time=0.9)
-            self.wait(0.6)
-        self.play(FadeIn(tau_note))
-        self.wait(1.6)
+        accel = MathTex(r"a=\frac{dv}{dt}", color=YELLOW).scale(0.92)
+        accel.next_to(n2, DOWN, buff=0.45)
+        self.play(Write(accel), run_time=1.5)
+        self.wait(1.4)
 
-        self.clear_scene()
-
-        # ------------------------------------------------------------
-        # 6) Solve t2
-        # ------------------------------------------------------------
-        title = self.section_title("Menentukan waktu fase 2")
-
-        panel = self.make_panel(11.6, 5.4, DOWN * 0.25)
-        head = Text(
-            "Target: kecepatan turun menjadi setengah vₘₐₓ",
-            font_size=26,
-            weight=BOLD,
+        meaning = Text(
+            "dv/dt = seberapa cepat kecepatan berubah terhadap waktu",
+            font_size=20, color=MUTED
         )
-        head.move_to(panel.get_top() + DOWN * 0.45)
-
-        eqs = VGroup(
-            MathTex(r"\frac12 v_{\max}=v_{\max}e^{-Ct_2/m}"),
-            MathTex(r"\frac12=e^{-Ct_2/m}"),
-            MathTex(r"\ln\left(\frac12\right)=-\frac{Ct_2}{m}"),
-            MathTex(r"t_2=\frac{m}{C}\ln 2"),
-            MathTex(r"t_2=\frac{2.5}{2}\ln 2\approx 0.866\ \mathrm{s}"),
-        ).arrange(DOWN, aligned_edge=LEFT, buff=0.21)
-        eqs.scale(0.68)
-        eqs.next_to(head, DOWN, buff=0.26)
-
-        self.play(Write(title), Create(panel), Write(head))
-        for eq in eqs:
-            self.play(Write(eq), run_time=0.9)
-            self.wait(0.6)
+        meaning.next_to(accel, DOWN, buff=0.33)
+        self.play(FadeIn(meaning), run_time=1.2)
         self.wait(1.8)
 
+        ode = MathTex(
+            r"F-Cv=m\frac{dv}{dt}",
+            color=WHITE
+        ).scale(1.0)
+        ode.move_to(right.get_center()+DOWN*1.25)
+        ode.set_color_by_tex("F", YELLOW)
+        ode.set_color_by_tex("Cv", PINK)
+        ode.set_color_by_tex(r"\frac{dv}{dt}", BLUE)
+
+        self.play(Write(ode), run_time=1.8)
+        self.wait(2.8)
         self.clear_scene()
 
-        # ------------------------------------------------------------
-        # 7) Put both phases on one time axis
-        # ------------------------------------------------------------
-        title = self.section_title("Gabungkan kedua fase")
+        # ============================================================
+        # PHASE 1: SEPARATE VARIABLES SLOWLY
+        # ============================================================
+        title = self.section_title("Fase 1 — pisahkan variabel sebelum mengintegralkan", PURPLE)
+        self.play(Write(title), run_time=1.5)
+
+        panel = self.panel(11.5, 5.25, DOWN*0.25, PURPLE)
+        self.play(Create(panel), run_time=1.1)
+
+        steps = [
+            MathTex(r"F-Cv=m\frac{dv}{dt}", color=WHITE),
+            MathTex(r"\frac{1}{F-Cv}\frac{dv}{dt}=\frac{1}{m}", color=WHITE),
+            MathTex(r"\frac{dv}{F-Cv}=\frac{dt}{m}", color=WHITE),
+        ]
+        ys = [1.25, 0.25, -0.75]
+
+        for eq, y in zip(steps, ys):
+            eq.scale(0.95).move_to(UP*y)
+            self.play(Write(eq), run_time=1.8)
+            self.wait(1.3)
+
+        explain_sep = VGroup(
+            Text("Kiri hanya memuat v.", font_size=23, color=BLUE),
+            Text("Kanan hanya memuat t.", font_size=23, color=YELLOW),
+        ).arrange(RIGHT, buff=1.1)
+        explain_sep.to_edge(DOWN, buff=0.55)
+        self.play(FadeIn(explain_sep), run_time=1.2)
+        self.wait(2.4)
+        self.clear_scene()
+
+        # ============================================================
+        # PHASE 1: INTEGRAL WITH BOUNDS
+        # ============================================================
+        title = self.section_title("Fase 1 — integral kedua ruas, pelan-pelan", GREEN)
+        self.play(Write(title), run_time=1.5)
+
+        panel = self.panel(12.0, 5.35, DOWN*0.25, GREEN)
+        self.play(Create(panel), run_time=1.1)
+
+        line1 = MathTex(
+            r"\frac{dv}{F-Cv}=\frac{dt}{m}", color=WHITE
+        ).scale(0.88).move_to(UP*1.45)
+        self.play(Write(line1), run_time=1.5)
+        self.wait(1.2)
+
+        bounds_note = Text(
+            "Saat t = 0, v = 0.  Saat t = t, kecepatannya v.",
+            font_size=22, color=MUTED
+        ).next_to(line1, DOWN, buff=0.28)
+        self.play(FadeIn(bounds_note), run_time=1.2)
+        self.wait(1.5)
+
+        integral = MathTex(
+            r"\int_{0}^{v}\frac{dv'}{F-Cv'}"
+            r"="
+            r"\int_{0}^{t}\frac{dt'}{m}",
+            color=WHITE
+        ).scale(0.92).move_to(UP*0.15)
+        integral.set_color_by_tex(r"\int_{0}^{v}", BLUE)
+        integral.set_color_by_tex(r"\int_{0}^{t}", YELLOW)
+        self.play(Write(integral), run_time=2.2)
+        self.wait(2.0)
+
+        anti_left = MathTex(
+            r"\int\frac{dv'}{F-Cv'}"
+            r"=-\frac{1}{C}\ln(F-Cv')",
+            color=GREEN
+        ).scale(0.82).move_to(DOWN*0.85)
+        self.play(Write(anti_left), run_time=2.0)
+        self.wait(1.8)
+
+        evaluated = MathTex(
+            r"\left[-\frac1C\ln(F-Cv')\right]_{0}^{v}"
+            r"="
+            r"\left[\frac{t'}{m}\right]_{0}^{t}",
+            color=WHITE
+        ).scale(0.82).move_to(DOWN*1.75)
+        self.play(Write(evaluated), run_time=2.2)
+        self.wait(2.5)
+        self.clear_scene()
+
+        # ============================================================
+        # PHASE 1: SIMPLIFY THE INTEGRAL RESULT
+        # ============================================================
+        title = self.section_title("Fase 1 — dari hasil integral ke fungsi v(t)", BLUE)
+        self.play(Write(title), run_time=1.5)
+
+        panel = self.panel(11.8, 5.35, DOWN*0.25, BLUE)
+        self.play(Create(panel), run_time=1.1)
+
+        simplify = VGroup(
+            MathTex(
+                r"-\frac1C\ln(F-Cv)+\frac1C\ln F=\frac{t}{m}",
+                color=WHITE
+            ),
+            MathTex(
+                r"\frac1C\ln\left(\frac{F}{F-Cv}\right)=\frac{t}{m}",
+                color=PURPLE
+            ),
+            MathTex(
+                r"\ln\left(\frac{F}{F-Cv}\right)=\frac{Ct}{m}",
+                color=PURPLE
+            ),
+            MathTex(
+                r"\frac{F}{F-Cv}=e^{Ct/m}",
+                color=WHITE
+            ),
+            MathTex(
+                r"F-Cv=Fe^{-Ct/m}",
+                color=WHITE
+            ),
+            MathTex(
+                r"\boxed{v(t)=\frac{F}{C}\left(1-e^{-Ct/m}\right)}",
+                color=BLUE
+            ),
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.24)
+        simplify.scale(0.72)
+        simplify.move_to(DOWN*0.15)
+
+        for i, eq in enumerate(simplify):
+            self.play(Write(eq), run_time=1.7)
+            self.wait(1.1 if i < 5 else 2.2)
+
+        self.clear_scene()
+
+        # ============================================================
+        # PHASE 1: PHYSICAL GRAPH + FIND t1
+        # ============================================================
+        title = self.section_title("Fase 1 — sekarang baru masukkan v_max", BLUE)
+        self.play(Write(title), run_time=1.5)
+
+        axes = Axes(
+            x_range=[0, 5.6, 1],
+            y_range=[0, 5.5, 1],
+            x_length=7.2,
+            y_length=4.8,
+            tips=False,
+            axis_config={"include_numbers": True, "font_size": 21, "color": WHITE},
+        ).move_to(LEFT*3.1 + DOWN*0.35)
+        curve = axes.plot(
+            lambda t: vinf*(1-np.exp(-k*t)),
+            x_range=[0,5.35],
+            color=BLUE, stroke_width=5
+        )
+        terminal = DashedLine(axes.c2p(0,vinf), axes.c2p(5.3,vinf), color=GREEN)
+        vmaxline = DashedLine(axes.c2p(0,vmax), axes.c2p(t1,vmax), color=YELLOW)
+        tline = DashedLine(axes.c2p(t1,0), axes.c2p(t1,vmax), color=YELLOW)
+
+        self.play(Create(axes), Create(curve), run_time=2.0)
+        self.play(Create(terminal), run_time=1.0)
+
+        side = self.panel(5.1, 5.0, RIGHT*4.1 + DOWN*0.25, BLUE)
+        self.play(Create(side), run_time=1.0)
+
+        terminal_eq = MathTex(
+            r"v_\infty=\frac{F}{C}=5.00\ \mathrm{m/s}",
+            color=GREEN
+        ).scale(0.78).move_to(side.get_center()+UP*1.55)
+        target_eq = MathTex(
+            r"v_{\max}=4.91\ \mathrm{m/s}",
+            color=YELLOW
+        ).scale(0.78).next_to(terminal_eq, DOWN, buff=0.34)
+        near = Text(
+            "4.91 m/s sangat dekat dengan 5.00 m/s.",
+            font_size=21, color=MUTED
+        ).next_to(target_eq, DOWN, buff=0.32)
+
+        self.play(Write(terminal_eq), run_time=1.4)
+        self.play(Write(target_eq), run_time=1.4)
+        self.play(FadeIn(near), run_time=1.0)
+        self.wait(1.5)
+
+        self.play(Create(vmaxline), Create(tline), run_time=1.4)
+
+        t1_eqs = VGroup(
+            MathTex(
+                r"4.91=5\left(1-e^{-0.8t_1}\right)",
+                color=WHITE
+            ),
+            MathTex(
+                r"e^{-0.8t_1}=0.018",
+                color=PURPLE
+            ),
+            MathTex(
+                r"t_1=-\frac{\ln(0.018)}{0.8}",
+                color=PURPLE
+            ),
+            MathTex(
+                r"\boxed{t_1\approx5.02\ \mathrm{s}}",
+                color=YELLOW
+            ),
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.24).scale(0.70)
+        t1_eqs.move_to(side.get_center()+DOWN*0.65)
+
+        for eq in t1_eqs:
+            self.play(Write(eq), run_time=1.6)
+            self.wait(1.0)
+        self.wait(2.0)
+        self.clear_scene()
+
+        # ============================================================
+        # PHASE 2: FORCE REMOVED + DERIVATIVE
+        # ============================================================
+        title = self.section_title("Fase 2 — gaya dorong dihentikan", PURPLE)
+        self.play(Write(title), run_time=1.5)
+
+        left = self.panel(5.5, 5.2, LEFT*3.7 + DOWN*0.2, PURPLE)
+        right = self.panel(6.8, 5.2, RIGHT*3.1 + DOWN*0.2, PINK)
+        self.play(Create(left), Create(right), run_time=1.4)
+
+        block = RoundedRectangle(
+            width=2.0, height=1.1, corner_radius=0.12,
+            stroke_color=WHITE, fill_color=BLUE, fill_opacity=0.12
+        ).move_to(left.get_center()+DOWN*0.1)
+        drag = Arrow(block.get_left(), block.get_left()+LEFT*1.6, color=PINK, buff=0.04)
+        vel = Arrow(
+            block.get_top()+UP*0.72+LEFT*0.65,
+            block.get_top()+UP*0.72+RIGHT*0.9,
+            color=BLUE, buff=0
+        )
+        self.play(Create(block), GrowArrow(drag), GrowArrow(vel), run_time=1.3)
+        self.play(
+            Write(MathTex(r"Cv", color=PINK).next_to(drag, UP, buff=0.1)),
+            Write(MathTex("v", color=BLUE).next_to(vel, UP, buff=0.1)),
+            run_time=1.0
+        )
+
+        note = Text("Sekarang tidak ada gaya F ke kanan.", font_size=22, color=MUTED)
+        note.next_to(block, DOWN, buff=0.7)
+        self.play(FadeIn(note), run_time=1.0)
+        self.wait(1.5)
+
+        ode2 = VGroup(
+            MathTex(r"\sum F_x=ma", color=WHITE),
+            MathTex(r"-Cv=m\frac{dv}{d\tau}", color=WHITE),
+            MathTex(r"\frac{dv}{v}=-\frac{C}{m}\,d\tau", color=PURPLE),
+        ).arrange(DOWN, buff=0.45).scale(0.88)
+        ode2.move_to(right.get_center()+UP*0.45)
+
+        for eq in ode2:
+            self.play(Write(eq), run_time=1.7)
+            self.wait(1.1)
+
+        tau = Text("τ = waktu sejak gaya dorong dilepas", font_size=21, color=MUTED)
+        tau.move_to(right.get_bottom()+UP*0.55)
+        self.play(FadeIn(tau), run_time=1.1)
+        self.wait(2.3)
+        self.clear_scene()
+
+        # ============================================================
+        # PHASE 2: INTEGRAL WITH BOUNDS
+        # ============================================================
+        title = self.section_title("Fase 2 — integralkan dari v_max ke v", GREEN)
+        self.play(Write(title), run_time=1.5)
+
+        panel = self.panel(11.8, 5.35, DOWN*0.25, GREEN)
+        self.play(Create(panel), run_time=1.0)
+
+        phase2_steps = VGroup(
+            MathTex(
+                r"\int_{v_{\max}}^{v}\frac{dv'}{v'}"
+                r"="
+                r"-\frac{C}{m}\int_{0}^{\tau}d\tau'",
+                color=WHITE
+            ),
+            MathTex(
+                r"\left[\ln v'\right]_{v_{\max}}^{v}"
+                r"="
+                r"-\frac{C}{m}\tau",
+                color=GREEN
+            ),
+            MathTex(
+                r"\ln v-\ln v_{\max}=-\frac{C\tau}{m}",
+                color=PURPLE
+            ),
+            MathTex(
+                r"\ln\left(\frac{v}{v_{\max}}\right)=-\frac{C\tau}{m}",
+                color=PURPLE
+            ),
+            MathTex(
+                r"\boxed{v(\tau)=v_{\max}e^{-C\tau/m}}",
+                color=BLUE
+            ),
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.28).scale(0.75)
+        phase2_steps.move_to(DOWN*0.12)
+
+        for eq in phase2_steps:
+            self.play(Write(eq), run_time=1.8)
+            self.wait(1.2)
+        self.wait(2.3)
+        self.clear_scene()
+
+        # ============================================================
+        # HALF SPEED
+        # ============================================================
+        title = self.section_title("Fase 2 — kapan kecepatannya menjadi setengah?", YELLOW)
+        self.play(Write(title), run_time=1.5)
+
+        panel = self.panel(10.8, 5.0, DOWN*0.2, YELLOW)
+        self.play(Create(panel), run_time=1.0)
+
+        half_steps = VGroup(
+            MathTex(
+                r"\frac12v_{\max}=v_{\max}e^{-Ct_2/m}",
+                color=WHITE
+            ),
+            MathTex(
+                r"\frac12=e^{-Ct_2/m}",
+                color=PURPLE
+            ),
+            MathTex(
+                r"\ln\left(\frac12\right)=-\frac{Ct_2}{m}",
+                color=PURPLE
+            ),
+            MathTex(
+                r"t_2=\frac{m}{C}\ln2",
+                color=GREEN
+            ),
+            MathTex(
+                r"t_2=\frac{2.5}{2}\ln2\approx0.866\ \mathrm{s}",
+                color=YELLOW
+            ),
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.27).scale(0.78)
+        half_steps.move_to(DOWN*0.1)
+
+        for eq in half_steps:
+            self.play(Write(eq), run_time=1.7)
+            self.wait(1.15)
+        self.wait(2.5)
+        self.clear_scene()
+
+        # ============================================================
+        # FINAL GRAPH: BOTH PHASES
+        # ============================================================
+        title = self.section_title("Gabungkan kedua fase", WHITE)
+        self.play(Write(title), run_time=1.5)
 
         axes = Axes(
             x_range=[0, 6.6, 1],
             y_range=[0, 5.5, 1],
-            x_length=9.2,
-            y_length=4.5,
+            x_length=8.7,
+            y_length=4.7,
             tips=False,
-            axis_config={"include_numbers": True, "font_size": 21},
-        )
-        axes.shift(LEFT * 1.45 + DOWN * 0.45)
+            axis_config={"include_numbers": True, "font_size": 21, "color": WHITE},
+        ).move_to(LEFT*1.8 + DOWN*0.35)
 
-        x_label = axes.get_x_axis_label(MathTex("t\ (s)").scale(0.8))
-        y_label = axes.get_y_axis_label(MathTex("v\ (m/s)").scale(0.8))
-
-        phase1_curve = axes.plot(
-            lambda t: vinf * (1 - np.exp(-k * t)),
-            x_range=[0, t1],
+        phase1 = axes.plot(
+            lambda t: vinf*(1-np.exp(-k*t)),
+            x_range=[0,t1],
+            color=BLUE, stroke_width=5
         )
-        phase2_curve = axes.plot(
-            lambda t: vmax * np.exp(-k * (t - t1)),
-            x_range=[t1, total],
+        phase2 = axes.plot(
+            lambda t: vmax*np.exp(-k*(t-t1)),
+            x_range=[t1,total],
+            color=PURPLE, stroke_width=5
         )
 
-        switch_line = DashedLine(
-            axes.c2p(t1, 0), axes.c2p(t1, vmax), stroke_width=2
-        )
-        finish_v = vmax / 2
-        finish_line = DashedLine(
-            axes.c2p(total, 0), axes.c2p(total, finish_v), stroke_width=2
-        )
+        switch_line = DashedLine(axes.c2p(t1,0), axes.c2p(t1,vmax), color=YELLOW)
+        half_line = DashedLine(axes.c2p(total,0), axes.c2p(total,vmax/2), color=GREEN)
 
-        switch_dot = Dot(axes.c2p(t1, vmax), radius=0.07)
-        finish_dot = Dot(axes.c2p(total, finish_v), radius=0.07)
-
-        info_panel = self.make_panel(3.55, 4.7, RIGHT * 5.25 + DOWN * 0.35)
-        info = VGroup(
-            Text("Ringkasan waktu", font_size=24, weight=BOLD),
-            MathTex(r"t_1\approx 5.02\ \mathrm{s}"),
-            MathTex(r"t_2\approx 0.866\ \mathrm{s}"),
-            Line(LEFT * 1.25, RIGHT * 1.25, stroke_width=1),
-            MathTex(r"T=t_1+t_2"),
-            MathTex(r"T\approx 5.89\ \mathrm{s}"),
-        ).arrange(DOWN, buff=0.35)
-        info.scale(0.88)
-        info.move_to(info_panel)
-
-        self.play(Write(title))
-        self.play(Create(axes), FadeIn(x_label, y_label), Create(info_panel))
-        self.play(Create(phase1_curve), run_time=1.8)
-        self.play(Create(switch_line), FadeIn(switch_dot))
-        self.wait(0.8)
-        self.play(Create(phase2_curve), run_time=1.2)
-        self.play(Create(finish_line), FadeIn(finish_dot))
-        self.wait(0.8)
-        for item in info:
-            self.play(Write(item) if not isinstance(item, Line) else Create(item), run_time=0.7)
-            self.wait(0.3)
-
-        self.wait(2.0)
-
-        self.clear_scene()
-
-        # ------------------------------------------------------------
-        # 8) Final answer only after the process
-        # ------------------------------------------------------------
-        title = Text("Hasil akhir", font_size=42, weight=BOLD)
-        title.to_edge(UP, buff=0.55)
-
-        result = MathTex(
-            r"T_{\mathrm{total}}"
-            r"=5.02+0.866"
-            r"\approx 5.89\ \mathrm{s}"
-        ).scale(1.15)
-
-        box = SurroundingRectangle(result, buff=0.28, stroke_width=2)
-
-        takeaway = VGroup(
-            Text("Inti proses:", font_size=27, weight=BOLD),
-            Text("1. Pisahkan dua fase gaya.", font_size=24),
-            Text("2. Turunkan ODE dari Hukum II Newton.", font_size=24),
-            Text("3. Selesaikan simbolik terlebih dahulu.", font_size=24),
-            Text("4. Baru substitusi angka dan jumlahkan waktu.", font_size=24),
-        ).arrange(DOWN, aligned_edge=LEFT, buff=0.24)
-        takeaway.next_to(result, DOWN, buff=0.75)
-
-        self.play(Write(title))
-        self.play(Write(result), Create(box), run_time=1.4)
+        self.play(Create(axes), run_time=1.5)
+        self.play(Create(phase1), run_time=2.0)
+        self.play(Create(switch_line), run_time=1.0)
         self.wait(1.0)
-        for item in takeaway:
-            self.play(FadeIn(item), run_time=0.55)
-            self.wait(0.25)
-        self.wait(2.5)
+        self.play(Create(phase2), run_time=1.7)
+        self.play(Create(half_line), run_time=1.0)
+
+        side = self.panel(4.1, 4.7, RIGHT*5.0 + DOWN*0.25, WHITE)
+        self.play(Create(side), run_time=1.0)
+
+        summary = VGroup(
+            Text("Durasi", font_size=25, color=WHITE, weight=BOLD),
+            MathTex(r"t_1\approx5.02\ \mathrm{s}", color=BLUE),
+            MathTex(r"t_2\approx0.866\ \mathrm{s}", color=PURPLE),
+            Line(LEFT*1.15, RIGHT*1.15, color=MUTED, stroke_width=1),
+            MathTex(r"T=t_1+t_2", color=WHITE),
+            MathTex(r"\boxed{T\approx5.89\ \mathrm{s}}", color=GREEN),
+        ).arrange(DOWN, buff=0.32).scale(0.82)
+        summary.move_to(side)
+
+        for item in summary:
+            if isinstance(item, Line):
+                self.play(Create(item), run_time=0.7)
+            else:
+                self.play(Write(item), run_time=1.2)
+            self.wait(0.55)
+
+        self.wait(3.0)
