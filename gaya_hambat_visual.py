@@ -169,8 +169,11 @@ class LinearDragDeepDive(Scene):
         self.play(Write(start), run_time=1.5)
         self.wait(1.2)
 
-        step1 = MathTex(r"\frac{1}{F-Cv}\left(F-Cv\right)
-                       =\frac{1}{F-Cv}m\frac{dv}{dt}", color=WHITE).scale(0.82).move_to(UP*0.45)
+        step1 = MathTex(
+            r"\frac{1}{F-Cv}\left(F-Cv\right)"
+            r"=\frac{1}{F-Cv}m\frac{dv}{dt}",
+            color=WHITE
+        ).scale(0.82).move_to(UP*0.45)
         self.color_math(step1)
         self.play(Write(step1), run_time=1.8)
         self.wait(1.3)
