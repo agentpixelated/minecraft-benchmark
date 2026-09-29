@@ -195,9 +195,9 @@ class DragForceSlow(Scene):
         self.wait(1.2)
 
         bounds_note = Text(
-            "Saat t = 0, v = 0.  Saat t = t, kecepatannya v.",
-            font_size=22, color=MUTED
-        ).next_to(line1, DOWN, buff=0.28)
+            "Batasnya: (t,v) = (0,0) hingga (t,v).",
+            font_size=19, color=MUTED
+        ).move_to(UP*0.82)
         self.play(FadeIn(bounds_note), run_time=1.2)
         self.wait(1.5)
 
@@ -206,7 +206,7 @@ class DragForceSlow(Scene):
             r"="
             r"\int_{0}^{t}\frac{dt'}{m}",
             color=WHITE
-        ).scale(0.92).move_to(UP*0.15)
+        ).scale(0.88).move_to(DOWN*0.05)
         integral.set_color_by_tex(r"\int_{0}^{v}", BLUE)
         integral.set_color_by_tex(r"\int_{0}^{t}", YELLOW)
         self.play(Write(integral), run_time=2.2)
@@ -216,7 +216,7 @@ class DragForceSlow(Scene):
             r"\int\frac{dv'}{F-Cv'}"
             r"=-\frac{1}{C}\ln(F-Cv')",
             color=GREEN
-        ).scale(0.82).move_to(DOWN*0.85)
+        ).scale(0.78).move_to(DOWN*0.95)
         self.play(Write(anti_left), run_time=2.0)
         self.wait(1.8)
 
@@ -312,9 +312,9 @@ class DragForceSlow(Scene):
             color=YELLOW
         ).scale(0.78).next_to(terminal_eq, DOWN, buff=0.34)
         near = Text(
-            "4.91 m/s sangat dekat dengan 5.00 m/s.",
-            font_size=21, color=MUTED
-        ).next_to(target_eq, DOWN, buff=0.32)
+            "4.91 m/s sangat dekat dengan batas 5.00 m/s.",
+            font_size=18, color=MUTED
+        ).next_to(target_eq, DOWN, buff=0.28)
 
         self.play(Write(terminal_eq), run_time=1.4)
         self.play(Write(target_eq), run_time=1.4)
@@ -322,6 +322,8 @@ class DragForceSlow(Scene):
         self.wait(1.5)
 
         self.play(Create(vmaxline), Create(tline), run_time=1.4)
+        self.wait(1.0)
+        self.play(FadeOut(near), run_time=0.8)
 
         t1_eqs = VGroup(
             MathTex(
@@ -340,8 +342,8 @@ class DragForceSlow(Scene):
                 r"\boxed{t_1\approx5.02\ \mathrm{s}}",
                 color=YELLOW
             ),
-        ).arrange(DOWN, aligned_edge=LEFT, buff=0.24).scale(0.70)
-        t1_eqs.move_to(side.get_center()+DOWN*0.65)
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.22).scale(0.62)
+        t1_eqs.move_to(side.get_center()+DOWN*0.72)
 
         for eq in t1_eqs:
             self.play(Write(eq), run_time=1.6)
