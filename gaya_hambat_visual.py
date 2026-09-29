@@ -164,19 +164,19 @@ class LinearDragDeepDive(Scene):
         title = self.title("2. Pisahkan v dan t dengan operasi yang sama", PURPLE)
         self.play(Write(title), run_time=1.3)
 
-        eq = MathTex(r"F-Cv=m\\frac{dv}{dt}", color=WHITE).scale(1.22).move_to(UP*1.45)
+        eq = MathTex(r"F-Cv=m\frac{dv}{dt}", color=WHITE).scale(1.22).move_to(UP*1.45)
         self.color_math(eq)
         self.play(Write(eq), run_time=1.5)
         self.wait(1.2)
 
-        divide_left = MathTex(r"\\div(F-Cv)", color=RED).scale(0.82).move_to(LEFT*3.7+UP*0.2)
+        divide_left = MathTex(r"\div(F-Cv)", color=RED).scale(0.82).move_to(LEFT*3.7+UP*0.2)
         divide_right = divide_left.copy().move_to(RIGHT*3.7+UP*0.2)
         caption = Text("bagi KEDUA ruas dengan (F − Cv)", font_size=23, color=GREY).move_to(UP*0.25)
         self.play(FadeIn(caption), FadeIn(divide_left), FadeIn(divide_right), run_time=1.0)
         self.wait(1.0)
 
         eq_div = MathTex(
-            r"1=\\frac{m}{F-Cv}\\frac{dv}{dt}",
+            r"1=\frac{m}{F-Cv}\frac{dv}{dt}",
             color=WHITE
         ).scale(1.15).move_to(DOWN*0.65)
         self.color_math(eq_div)
@@ -187,14 +187,14 @@ class LinearDragDeepDive(Scene):
         )
         self.wait(1.5)
 
-        factor_left = MathTex(r"\\times\\frac{dt}{m}", color=TEAL).scale(0.88).move_to(LEFT*3.7+DOWN*1.7)
+        factor_left = MathTex(r"\times\frac{dt}{m}", color=TEAL).scale(0.88).move_to(LEFT*3.7+DOWN*1.7)
         factor_right = factor_left.copy().move_to(RIGHT*3.7+DOWN*1.7)
         caption2 = Text("kalikan KEDUA ruas dengan dt/m", font_size=23, color=GREY).move_to(DOWN*1.55)
         self.play(FadeIn(caption2), FadeIn(factor_left), FadeIn(factor_right), run_time=1.0)
         self.wait(1.0)
 
         separated = MathTex(
-            r"\\frac{dv}{F-Cv}=\\frac{dt}{m}",
+            r"\frac{dv}{F-Cv}=\frac{dt}{m}",
             color=WHITE
         ).scale(1.28).move_to(DOWN*0.55)
         self.color_math(separated)
@@ -316,9 +316,9 @@ class LinearDragDeepDive(Scene):
         self.play(Write(title), run_time=1.4)
 
         base=MathTex(
-            r"\\ln\\left(\\frac{F}{F-Cv}\\right)",
+            r"\ln\left(\frac{F}{F-Cv}\right)",
             "=",
-            r"\\frac{Ct}{m}",
+            r"\frac{Ct}{m}",
             color=WHITE
         ).scale(1.18).move_to(UP*1.75)
         self.color_math(base)
@@ -336,8 +336,8 @@ class LinearDragDeepDive(Scene):
         self.play(FadeIn(warning), run_time=1.2)
         self.wait(2.2)
 
-        opL=MathTex(r"x\\mapsto e^x", color=GREEN).scale(1.2).move_to(LEFT*2.65+DOWN*0.65)
-        opR=MathTex(r"x\\mapsto e^x", color=GREEN).scale(1.2).move_to(RIGHT*2.65+DOWN*0.65)
+        opL=MathTex(r"x\mapsto e^x", color=GREEN).scale(1.2).move_to(LEFT*2.65+DOWN*0.65)
+        opR=MathTex(r"x\mapsto e^x", color=GREEN).scale(1.2).move_to(RIGHT*2.65+DOWN*0.65)
         op_caption=Text("operasi identik di kiri dan kanan", font_size=21, color=GREY).move_to(DOWN*1.45)
         self.play(FadeIn(opL), FadeIn(opR), FadeIn(op_caption), run_time=1.1)
 
@@ -347,22 +347,22 @@ class LinearDragDeepDive(Scene):
         self.wait(1.5)
 
         exp_both=MathTex(
-            r"e^{\\,\\ln\\left(\\frac{F}{F-Cv}\\right)}",
+            r"e^{\,\ln\left(\frac{F}{F-Cv}\right)}",
             "=",
-            r"e^{\\,Ct/m}",
+            r"e^{\,Ct/m}",
             color=WHITE
         ).scale(1.08).move_to(DOWN*2.05)
         self.color_math(exp_both)
         self.play(Write(exp_both), run_time=2.0)
         self.wait(2.0)
 
-        inverse_rule=MathTex(r"e^{\\ln z}=z", color=GREEN).scale(0.95).to_corner(DR).shift(LEFT*0.4+UP*0.2)
+        inverse_rule=MathTex(r"e^{\ln z}=z", color=GREEN).scale(0.95).to_corner(DR).shift(LEFT*0.4+UP*0.2)
         self.play(Write(inverse_rule), run_time=1.4)
         self.play(Circumscribe(exp_both[0], color=GREEN, fade_out=True), run_time=1.6)
         self.wait(2.0)
 
         simplified=MathTex(
-            r"\\frac{F}{F-Cv}",
+            r"\frac{F}{F-Cv}",
             "=",
             r"e^{Ct/m}",
             color=WHITE
@@ -414,14 +414,14 @@ class LinearDragDeepDive(Scene):
         self.play(Write(title), run_time=1.3)
 
         e2=MathTex(
-            r"\\frac{F}{F-Cv}=e^{Ct/m}",
+            r"\frac{F}{F-Cv}=e^{Ct/m}",
             color=WHITE
         ).scale(1.18).move_to(UP*1.75)
         self.color_math(e2)
         self.play(Write(e2), run_time=1.6)
         self.wait(1.2)
 
-        factorL=MathTex(r"\\times(F-Cv)", color=RED).scale(1.0).move_to(LEFT*3.6+UP*0.55)
+        factorL=MathTex(r"\times(F-Cv)", color=RED).scale(1.0).move_to(LEFT*3.6+UP*0.55)
         factorR=factorL.copy().move_to(RIGHT*3.6+UP*0.55)
         equal_ops=Text("operasi kiri = operasi kanan", font_size=22, color=GREY).move_to(UP*0.35)
         self.play(FadeIn(factorL), FadeIn(factorR), FadeIn(equal_ops), run_time=1.0)
@@ -443,7 +443,7 @@ class LinearDragDeepDive(Scene):
         )
         self.wait(1.5)
 
-        factor2L=MathTex(r"\\times e^{-Ct/m}", color=GREEN).scale(0.95).move_to(LEFT*3.6+DOWN*1.15)
+        factor2L=MathTex(r"\times e^{-Ct/m}", color=GREEN).scale(0.95).move_to(LEFT*3.6+DOWN*1.15)
         factor2R=factor2L.copy().move_to(RIGHT*3.6+DOWN*1.15)
         why2=Text("kalikan kedua ruas dengan e⁻ᶜᵗ⁄ᵐ", font_size=22, color=GREY).move_to(DOWN*1.25)
         self.play(FadeIn(factor2L), FadeIn(factor2R), FadeIn(why2), run_time=1.0)
