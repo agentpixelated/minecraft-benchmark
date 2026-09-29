@@ -1,4 +1,4 @@
-name: Render Slow Physics Drag Solution
+name: Preview Deep Physics Drag Solution
 
 on:
   push:
@@ -23,15 +23,15 @@ jobs:
       options: --user 0
     steps:
       - uses: actions/checkout@v4
-      - name: Render animation
-        run: manim -qh gaya_hambat_visual.py DragForceSlow
-      - name: Verify output
+      - name: Render preview
+        run: manim -qm gaya_hambat_visual.py LinearDragDeepDive
+      - name: Verify preview
         run: |
-          test -f media/videos/gaya_hambat_visual/1080p60/DragForceSlow.mp4
-          ls -lh media/videos/gaya_hambat_visual/1080p60/DragForceSlow.mp4
-      - name: Upload MP4
+          test -f media/videos/gaya_hambat_visual/720p30/LinearDragDeepDive.mp4
+          ls -lh media/videos/gaya_hambat_visual/720p30/LinearDragDeepDive.mp4
+      - name: Upload preview
         uses: actions/upload-artifact@v4
         with:
-          name: slow-physics-drag-solution
-          path: media/videos/gaya_hambat_visual/1080p60/DragForceSlow.mp4
+          name: deep-physics-drag-preview
+          path: media/videos/gaya_hambat_visual/720p30/LinearDragDeepDive.mp4
           if-no-files-found: error
