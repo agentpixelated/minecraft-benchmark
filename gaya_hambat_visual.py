@@ -336,8 +336,8 @@ class LinearDragDeepDive(Scene):
         self.play(FadeIn(warning), run_time=1.2)
         self.wait(2.2)
 
-        opL=MathTex(r"e^{(\\,\\cdot\\,)}", color=GREEN).scale(1.2).move_to(LEFT*2.65+DOWN*0.65)
-        opR=MathTex(r"e^{(\\,\\cdot\\,)}", color=GREEN).scale(1.2).move_to(RIGHT*2.65+DOWN*0.65)
+        opL=MathTex(r"x\\mapsto e^x", color=GREEN).scale(1.2).move_to(LEFT*2.65+DOWN*0.65)
+        opR=MathTex(r"x\\mapsto e^x", color=GREEN).scale(1.2).move_to(RIGHT*2.65+DOWN*0.65)
         op_caption=Text("operasi identik di kiri dan kanan", font_size=21, color=GREY).move_to(DOWN*1.45)
         self.play(FadeIn(opL), FadeIn(opR), FadeIn(op_caption), run_time=1.1)
 
