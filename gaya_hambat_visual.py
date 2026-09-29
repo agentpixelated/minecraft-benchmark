@@ -1,541 +1,614 @@
 from manim import *
 import numpy as np
 
-# Colorful math-animation palette inspired by 3Blue1Brown's visual language.
-BG = "#0B0F14"
-BLUE = "#58C4DD"       # velocity / curves
-YELLOW = "#F4D35E"     # applied force / derivative
-GREEN = "#6BCB77"      # integral / result
-PINK = "#FF6B9A"       # drag force
-PURPLE = "#C792EA"     # algebra transformations
-WHITE = "#E8EDF2"
-MUTED = "#AAB4C0"
-PANEL = "#263342"
+# Visual language inspired by the educational principles of 3Blue1Brown:
+# dark field, semantic colors, minimal chrome, transformations instead of slides.
+BG = "#0B0E14"
+WHITE = "#F2F3F4"
+GREY = "#A7B0BE"
+BLUE = "#58C4DD"      # velocity, v
+YELLOW = "#FFFF00"    # applied force, F
+RED = "#FC6255"       # drag force, Cv
+GREEN = "#83C167"     # exponential / Euler operation / final result
+PURPLE = "#9A72AC"    # logarithm / algebraic transformation
+TEAL = "#5CD0B3"
+ORANGE = "#FFB347"
 
 config.background_color = BG
 
 
-class DragForceSlow(Scene):
-    def section_title(self, text, color=WHITE):
-        title = Text(text, font_size=35, color=color, weight=BOLD)
-        title.to_edge(UP, buff=0.28)
-        return title
+class LinearDragDeepDive(Scene):
+    def color_math(self, mob):
+        mob.set_color_by_tex("v", BLUE)
+        mob.set_color_by_tex("F", YELLOW)
+        mob.set_color_by_tex("C", RED)
+        mob.set_color_by_tex("e", GREEN)
+        mob.set_color_by_tex(r"\ln", PURPLE)
+        mob.set_color_by_tex("t", TEAL)
+        mob.set_color_by_tex(r"\tau", TEAL)
+        return mob
 
-    def panel(self, width, height, center, color=PANEL):
-        p = RoundedRectangle(
-            width=width,
-            height=height,
-            corner_radius=0.16,
-            stroke_color=color,
-            stroke_width=2,
-            fill_color=BG,
-            fill_opacity=0.25,
-        )
-        p.move_to(center)
-        return p
+    def title(self, text, color=WHITE):
+        t = Text(text, font_size=34, color=color, weight=BOLD)
+        t.to_edge(UP, buff=0.28)
+        return t
 
-    def clear_scene(self, wait=0.4):
-        self.play(*[FadeOut(m) for m in self.mobjects], run_time=1.2)
-        self.wait(wait)
+    def wipe(self, keep=None):
+        keep = set(keep or [])
+        mobs = [m for m in self.mobjects if m not in keep]
+        if mobs:
+            self.play(*[FadeOut(m) for m in mobs], run_time=1.1)
+        self.wait(0.35)
 
     def construct(self):
-        self.camera.background_color = BG
+        m, F, C, vmax = 2.5, 10.0, 2.0, 4.91
+        vinf = F/C
+        k = C/m
+        t1 = -(m/C)*np.log(1 - C*vmax/F)
+        t2 = (m/C)*np.log(2)
+        total = t1+t2
 
-        m = 2.5
-        F = 10.0
-        C = 2.0
-        vmax = 4.91
-        vinf = F / C
-        k = C / m
-        t1 = -(m / C) * np.log(1 - C * vmax / F)
-        t2 = (m / C) * np.log(2)
-        total = t1 + t2
+        # ==========================================================
+        # 0. WHAT THE PHYSICS IS SAYING
+        # ==========================================================
+        big = Text("Sebelum menghitung: apa yang sedang terjadi?", font_size=39, color=WHITE)
+        self.play(Write(big), run_time=1.8)
+        self.wait(1.8)
+        self.play(big.animate.scale(0.72).to_edge(UP, buff=0.28), run_time=1.2)
 
-        # ============================================================
-        # INTRO: READ BEFORE SOLVING
-        # ============================================================
-        title = Text("Balok dengan Hambatan Udara Linear", font_size=42, color=WHITE)
-        subtitle = MathTex(r"F_d=Cv", color=PINK).scale(1.25)
-        intro = VGroup(title, subtitle).arrange(DOWN, buff=0.35)
+        floor = Line(LEFT*5.2, RIGHT*5.2, color=GREY, stroke_width=2).shift(DOWN*1.45)
+        block = RoundedRectangle(width=2.0, height=1.05, corner_radius=0.12,
+                                 stroke_color=WHITE, fill_color="#172033", fill_opacity=1)
+        block.move_to(DOWN*0.9)
 
-        self.play(Write(title), run_time=1.8)
-        self.play(Write(subtitle), run_time=1.4)
-        self.wait(2.0)
+        vtracker = ValueTracker(0.4)
 
-        data = VGroup(
-            MathTex(r"m=2.5\ \mathrm{kg}", color=WHITE),
-            MathTex(r"F=10\ \mathrm N", color=YELLOW),
-            MathTex(r"C=2\ \mathrm{N\,s/m}", color=PINK),
-            MathTex(r"v_{\max}=4.91\ \mathrm{m/s}", color=BLUE),
-        ).arrange(RIGHT, buff=0.65).scale(0.72)
-        data.to_edge(DOWN, buff=0.65)
-
-        self.play(FadeIn(data, shift=UP*0.15), run_time=1.5)
-        self.wait(2.2)
-
-        phase_note = Text(
-            "Kunci: gerak terdiri dari dua fase yang persamaannya berbeda.",
-            font_size=25, color=MUTED
+        vel_arrow = always_redraw(lambda:
+            Arrow(block.get_top()+UP*0.55+LEFT*0.8,
+                  block.get_top()+UP*0.55+LEFT*0.8+RIGHT*(0.45+0.23*vtracker.get_value()),
+                  color=BLUE, stroke_width=7, buff=0)
         )
-        phase_note.next_to(intro, DOWN, buff=0.75)
-        self.play(FadeIn(phase_note), run_time=1.3)
-        self.wait(2.8)
-        self.clear_scene()
+        drag_arrow = always_redraw(lambda:
+            Arrow(block.get_left(),
+                  block.get_left()+LEFT*(0.35+0.23*vtracker.get_value()),
+                  color=RED, stroke_width=7, buff=0)
+        )
+        push_arrow = Arrow(block.get_right(), block.get_right()+RIGHT*2.0,
+                           color=YELLOW, stroke_width=7, buff=0)
 
-        # ============================================================
-        # PHASE 1: FORCES + WHY dv/dt APPEARS
-        # ============================================================
-        title = self.section_title("Fase 1 — balok masih didorong", BLUE)
-        self.play(Write(title), run_time=1.5)
-
-        left = self.panel(5.5, 5.2, LEFT*3.7 + DOWN*0.2, BLUE)
-        right = self.panel(6.8, 5.2, RIGHT*3.1 + DOWN*0.2, YELLOW)
-        self.play(Create(left), Create(right), run_time=1.4)
-
-        block = RoundedRectangle(
-            width=2.0, height=1.1, corner_radius=0.12,
-            stroke_color=WHITE, fill_color=BLUE, fill_opacity=0.12
-        ).move_to(left.get_center()+DOWN*0.1)
-        block_text = MathTex("m", color=WHITE).move_to(block)
-
-        push = Arrow(block.get_right(), block.get_right()+RIGHT*1.55, color=YELLOW, buff=0.04)
-        drag = Arrow(block.get_left(), block.get_left()+LEFT*1.55, color=PINK, buff=0.04)
-        vel = Arrow(
-            block.get_top()+UP*0.72+LEFT*0.65,
-            block.get_top()+UP*0.72+RIGHT*0.9,
-            color=BLUE, buff=0
+        push_label = MathTex(r"F=10\,\mathrm N", color=YELLOW).scale(0.82).next_to(push_arrow, UP, buff=0.12)
+        vel_label = always_redraw(lambda:
+            MathTex(rf"v={vtracker.get_value():.1f}\,\mathrm{{m/s}}", color=BLUE)
+            .scale(0.72).next_to(vel_arrow, UP, buff=0.08)
+        )
+        drag_label = always_redraw(lambda:
+            MathTex(r"F_d=Cv", color=RED).scale(0.76).next_to(drag_arrow, UP, buff=0.08)
         )
 
-        self.play(Create(block), Write(block_text), run_time=1.0)
-        self.play(GrowArrow(push), Write(MathTex("F", color=YELLOW).next_to(push, UP, buff=0.1)), run_time=1.2)
-        self.wait(0.8)
-        self.play(GrowArrow(drag), Write(MathTex(r"Cv", color=PINK).next_to(drag, UP, buff=0.1)), run_time=1.2)
-        self.wait(0.8)
-        self.play(GrowArrow(vel), Write(MathTex("v", color=BLUE).next_to(vel, UP, buff=0.1)), run_time=1.2)
-        self.wait(1.4)
-
-        right_head = Text("Mengubah gaya menjadi persamaan gerak", font_size=23, color=YELLOW, weight=BOLD)
-        right_head.move_to(right.get_top()+DOWN*0.42)
-        self.play(Write(right_head), run_time=1.2)
-
-        n2 = MathTex(r"\sum F_x=ma", color=WHITE).scale(0.92)
-        n2.move_to(right.get_center()+UP*1.25)
-        self.play(Write(n2), run_time=1.5)
+        self.play(Create(floor), Create(block), run_time=1.2)
+        self.play(GrowArrow(push_arrow), Write(push_label), run_time=1.2)
+        self.play(GrowArrow(vel_arrow), GrowArrow(drag_arrow), FadeIn(vel_label), FadeIn(drag_label), run_time=1.3)
         self.wait(1.2)
 
-        accel = MathTex(r"a=\frac{dv}{dt}", color=YELLOW).scale(0.92)
-        accel.next_to(n2, DOWN, buff=0.45)
-        self.play(Write(accel), run_time=1.5)
-        self.wait(1.4)
+        sentence = Text(
+            "Makin cepat balok bergerak, makin besar gaya hambatnya.",
+            font_size=25, color=GREY
+        ).to_edge(DOWN, buff=0.42)
+        self.play(FadeIn(sentence), run_time=1.1)
 
-        meaning = Text(
-            "dv/dt = seberapa cepat kecepatan berubah terhadap waktu",
-            font_size=20, color=MUTED
-        )
-        meaning.next_to(accel, DOWN, buff=0.33)
-        self.play(FadeIn(meaning), run_time=1.2)
-        self.wait(1.8)
-
-        ode = MathTex(
-            r"F-Cv=m\frac{dv}{dt}",
-            color=WHITE
-        ).scale(1.0)
-        ode.move_to(right.get_center()+DOWN*1.25)
-        ode.set_color_by_tex("F", YELLOW)
-        ode.set_color_by_tex("Cv", PINK)
-        ode.set_color_by_tex(r"\frac{dv}{dt}", BLUE)
-
-        self.play(Write(ode), run_time=1.8)
-        self.wait(2.8)
-        self.clear_scene()
-
-        # ============================================================
-        # PHASE 1: SEPARATE VARIABLES SLOWLY
-        # ============================================================
-        title = self.section_title("Fase 1 — pisahkan variabel sebelum mengintegralkan", PURPLE)
-        self.play(Write(title), run_time=1.5)
-
-        panel = self.panel(11.5, 5.25, DOWN*0.25, PURPLE)
-        self.play(Create(panel), run_time=1.1)
-
-        steps = [
-            MathTex(r"F-Cv=m\frac{dv}{dt}", color=WHITE),
-            MathTex(r"\frac{1}{F-Cv}\frac{dv}{dt}=\frac{1}{m}", color=WHITE),
-            MathTex(r"\frac{dv}{F-Cv}=\frac{dt}{m}", color=WHITE),
-        ]
-        ys = [1.25, 0.25, -0.75]
-
-        for eq, y in zip(steps, ys):
-            eq.scale(0.95).move_to(UP*y)
-            self.play(Write(eq), run_time=1.8)
-            self.wait(1.3)
-
-        explain_sep = VGroup(
-            Text("Kiri hanya memuat v.", font_size=23, color=BLUE),
-            Text("Kanan hanya memuat t.", font_size=23, color=YELLOW),
-        ).arrange(RIGHT, buff=1.1)
-        explain_sep.to_edge(DOWN, buff=0.55)
-        self.play(FadeIn(explain_sep), run_time=1.2)
-        self.wait(2.4)
-        self.clear_scene()
-
-        # ============================================================
-        # PHASE 1: INTEGRAL WITH BOUNDS
-        # ============================================================
-        title = self.section_title("Fase 1 — integral kedua ruas, pelan-pelan", GREEN)
-        self.play(Write(title), run_time=1.5)
-
-        panel = self.panel(12.0, 5.35, DOWN*0.25, GREEN)
-        self.play(Create(panel), run_time=1.1)
-
-        line1 = MathTex(
-            r"\frac{dv}{F-Cv}=\frac{dt}{m}", color=WHITE
-        ).scale(0.88).move_to(UP*1.45)
-        self.play(Write(line1), run_time=1.5)
-        self.wait(1.2)
-
-        bounds_note = Text(
-            "Batasnya: (t,v) = (0,0) hingga (t,v).",
-            font_size=19, color=MUTED
-        ).move_to(UP*0.82)
-        self.play(FadeIn(bounds_note), run_time=1.2)
+        self.play(vtracker.animate.set_value(2.0), run_time=2.1)
+        self.wait(0.8)
+        self.play(vtracker.animate.set_value(4.0), run_time=2.1)
+        self.wait(0.8)
+        self.play(vtracker.animate.set_value(4.91), run_time=2.2)
         self.wait(1.5)
 
-        integral = MathTex(
-            r"\int_{0}^{v}\frac{dv'}{F-Cv'}"
-            r"="
-            r"\int_{0}^{t}\frac{dt'}{m}",
-            color=WHITE
-        ).scale(0.88).move_to(DOWN*0.05)
-        integral.set_color_by_tex(r"\int_{0}^{v}", BLUE)
-        integral.set_color_by_tex(r"\int_{0}^{t}", YELLOW)
-        self.play(Write(integral), run_time=2.2)
+        balance = MathTex(r"F-Cv", color=WHITE).scale(1.0)
+        balance.set_color_by_tex("F", YELLOW)
+        balance.set_color_by_tex("C", RED)
+        balance.set_color_by_tex("v", BLUE)
+        balance.next_to(block, DOWN, buff=0.55)
+        self.play(Transform(sentence, balance), run_time=1.3)
         self.wait(2.0)
+        self.wipe()
 
-        anti_left = MathTex(
-            r"\int\frac{dv'}{F-Cv'}"
-            r"=-\frac{1}{C}\ln(F-Cv')",
-            color=GREEN
-        ).scale(0.78).move_to(DOWN*0.95)
-        self.play(Write(anti_left), run_time=2.0)
-        self.wait(1.8)
+        # ==========================================================
+        # 1. FORCE -> DIFFERENTIAL EQUATION
+        # ==========================================================
+        title = self.title("1. Dari diagram gaya ke persamaan diferensial", BLUE)
+        self.play(Write(title), run_time=1.4)
 
-        evaluated = MathTex(
-            r"\left[-\frac1C\ln(F-Cv')\right]_{0}^{v}"
-            r"="
-            r"\left[\frac{t'}{m}\right]_{0}^{t}",
-            color=WHITE
-        ).scale(0.82).move_to(DOWN*1.75)
-        self.play(Write(evaluated), run_time=2.2)
-        self.wait(2.5)
-        self.clear_scene()
-
-        # ============================================================
-        # PHASE 1: SIMPLIFY THE INTEGRAL RESULT
-        # ============================================================
-        title = self.section_title("Fase 1 — dari hasil integral ke fungsi v(t)", BLUE)
-        self.play(Write(title), run_time=1.5)
-
-        panel = self.panel(11.8, 5.35, DOWN*0.25, BLUE)
-        self.play(Create(panel), run_time=1.1)
-
-        simplify = VGroup(
-            MathTex(
-                r"-\frac1C\ln(F-Cv)+\frac1C\ln F=\frac{t}{m}",
-                color=WHITE
-            ),
-            MathTex(
-                r"\frac1C\ln\left(\frac{F}{F-Cv}\right)=\frac{t}{m}",
-                color=PURPLE
-            ),
-            MathTex(
-                r"\ln\left(\frac{F}{F-Cv}\right)=\frac{Ct}{m}",
-                color=PURPLE
-            ),
-            MathTex(
-                r"\frac{F}{F-Cv}=e^{Ct/m}",
-                color=WHITE
-            ),
-            MathTex(
-                r"F-Cv=Fe^{-Ct/m}",
-                color=WHITE
-            ),
-            MathTex(
-                r"\boxed{v(t)=\frac{F}{C}\left(1-e^{-Ct/m}\right)}",
-                color=BLUE
-            ),
-        ).arrange(DOWN, aligned_edge=LEFT, buff=0.24)
-        simplify.scale(0.72)
-        simplify.move_to(DOWN*0.15)
-
-        for i, eq in enumerate(simplify):
-            self.play(Write(eq), run_time=1.7)
-            self.wait(1.1 if i < 5 else 2.2)
-
-        self.clear_scene()
-
-        # ============================================================
-        # PHASE 1: PHYSICAL GRAPH + FIND t1
-        # ============================================================
-        title = self.section_title("Fase 1 — sekarang baru masukkan v_max", BLUE)
-        self.play(Write(title), run_time=1.5)
-
-        axes = Axes(
-            x_range=[0, 5.6, 1],
-            y_range=[0, 5.5, 1],
-            x_length=7.2,
-            y_length=4.8,
-            tips=False,
-            axis_config={"include_numbers": True, "font_size": 21, "color": WHITE},
-        ).move_to(LEFT*3.1 + DOWN*0.35)
-        curve = axes.plot(
-            lambda t: vinf*(1-np.exp(-k*t)),
-            x_range=[0,5.35],
-            color=BLUE, stroke_width=5
-        )
-        terminal = DashedLine(axes.c2p(0,vinf), axes.c2p(5.3,vinf), color=GREEN)
-        vmaxline = DashedLine(axes.c2p(0,vmax), axes.c2p(t1,vmax), color=YELLOW)
-        tline = DashedLine(axes.c2p(t1,0), axes.c2p(t1,vmax), color=YELLOW)
-
-        self.play(Create(axes), Create(curve), run_time=2.0)
-        self.play(Create(terminal), run_time=1.0)
-
-        side = self.panel(5.1, 5.0, RIGHT*4.1 + DOWN*0.25, BLUE)
-        self.play(Create(side), run_time=1.0)
-
-        terminal_eq = MathTex(
-            r"v_\infty=\frac{F}{C}=5.00\ \mathrm{m/s}",
-            color=GREEN
-        ).scale(0.78).move_to(side.get_center()+UP*1.55)
-        target_eq = MathTex(
-            r"v_{\max}=4.91\ \mathrm{m/s}",
-            color=YELLOW
-        ).scale(0.78).next_to(terminal_eq, DOWN, buff=0.34)
-        near = Text(
-            "4.91 m/s sangat dekat dengan batas 5.00 m/s.",
-            font_size=18, color=MUTED
-        ).next_to(target_eq, DOWN, buff=0.28)
-
-        self.play(Write(terminal_eq), run_time=1.4)
-        self.play(Write(target_eq), run_time=1.4)
-        self.play(FadeIn(near), run_time=1.0)
-        self.wait(1.5)
-
-        self.play(Create(vmaxline), Create(tline), run_time=1.4)
-        self.wait(1.0)
-        self.play(FadeOut(near), run_time=0.8)
-
-        t1_eqs = VGroup(
-            MathTex(
-                r"4.91=5\left(1-e^{-0.8t_1}\right)",
-                color=WHITE
-            ),
-            MathTex(
-                r"e^{-0.8t_1}=0.018",
-                color=PURPLE
-            ),
-            MathTex(
-                r"t_1=-\frac{\ln(0.018)}{0.8}",
-                color=PURPLE
-            ),
-            MathTex(
-                r"\boxed{t_1\approx5.02\ \mathrm{s}}",
-                color=YELLOW
-            ),
-        ).arrange(DOWN, aligned_edge=LEFT, buff=0.22).scale(0.62)
-        t1_eqs.move_to(side.get_center()+DOWN*0.72)
-
-        for eq in t1_eqs:
-            self.play(Write(eq), run_time=1.6)
-            self.wait(1.0)
-        self.wait(2.0)
-        self.clear_scene()
-
-        # ============================================================
-        # PHASE 2: FORCE REMOVED + DERIVATIVE
-        # ============================================================
-        title = self.section_title("Fase 2 — gaya dorong dihentikan", PURPLE)
-        self.play(Write(title), run_time=1.5)
-
-        left = self.panel(5.5, 5.2, LEFT*3.7 + DOWN*0.2, PURPLE)
-        right = self.panel(6.8, 5.2, RIGHT*3.1 + DOWN*0.2, PINK)
-        self.play(Create(left), Create(right), run_time=1.4)
-
-        block = RoundedRectangle(
-            width=2.0, height=1.1, corner_radius=0.12,
-            stroke_color=WHITE, fill_color=BLUE, fill_opacity=0.12
-        ).move_to(left.get_center()+DOWN*0.1)
-        drag = Arrow(block.get_left(), block.get_left()+LEFT*1.6, color=PINK, buff=0.04)
-        vel = Arrow(
-            block.get_top()+UP*0.72+LEFT*0.65,
-            block.get_top()+UP*0.72+RIGHT*0.9,
-            color=BLUE, buff=0
-        )
-        self.play(Create(block), GrowArrow(drag), GrowArrow(vel), run_time=1.3)
+        left_block = RoundedRectangle(width=1.9, height=1.0, corner_radius=0.12,
+                                      stroke_color=WHITE, fill_color="#172033", fill_opacity=1)
+        left_block.move_to(LEFT*3.8+DOWN*0.35)
+        F_arrow = Arrow(left_block.get_right(), left_block.get_right()+RIGHT*1.9, color=YELLOW, buff=0)
+        D_arrow = Arrow(left_block.get_left(), left_block.get_left()+LEFT*1.45, color=RED, buff=0)
+        self.play(Create(left_block), GrowArrow(F_arrow), GrowArrow(D_arrow), run_time=1.4)
         self.play(
-            Write(MathTex(r"Cv", color=PINK).next_to(drag, UP, buff=0.1)),
-            Write(MathTex("v", color=BLUE).next_to(vel, UP, buff=0.1)),
+            Write(MathTex("F", color=YELLOW).next_to(F_arrow, UP, buff=0.08)),
+            Write(MathTex("Cv", color=RED).next_to(D_arrow, UP, buff=0.08)),
             run_time=1.0
         )
 
-        note = Text("Sekarang tidak ada gaya F ke kanan.", font_size=22, color=MUTED)
-        note.next_to(block, DOWN, buff=0.7)
-        self.play(FadeIn(note), run_time=1.0)
+        eq1 = MathTex(r"\sum F_x = ma", color=WHITE).scale(1.0).move_to(RIGHT*2.7+UP*1.35)
+        eq2 = MathTex(r"F-Cv = ma", color=WHITE).scale(1.0).move_to(eq1)
+        eq3 = MathTex(r"a=\frac{dv}{dt}", color=WHITE).scale(0.92).move_to(RIGHT*2.7+UP*0.25)
+        eq4 = MathTex(r"F-Cv=m\frac{dv}{dt}", color=WHITE).scale(1.05).move_to(RIGHT*2.7+DOWN*1.0)
+
+        for eq in [eq1,eq2,eq3,eq4]:
+            self.color_math(eq)
+
+        self.play(Write(eq1), run_time=1.4)
+        self.wait(1.0)
+        self.play(TransformMatchingTex(eq1, eq2), run_time=1.4)
+        self.wait(1.0)
+        self.play(Write(eq3), run_time=1.4)
         self.wait(1.5)
 
-        ode2 = VGroup(
-            MathTex(r"\sum F_x=ma", color=WHITE),
-            MathTex(r"-Cv=m\frac{dv}{d\tau}", color=WHITE),
-            MathTex(r"\frac{dv}{v}=-\frac{C}{m}\,d\tau", color=PURPLE),
-        ).arrange(DOWN, buff=0.45).scale(0.88)
-        ode2.move_to(right.get_center()+UP*0.45)
+        deriv_note = VGroup(
+            Text("dv", font_size=25, color=BLUE),
+            Text("perubahan kecil pada kecepatan", font_size=21, color=GREY),
+            Text("dt", font_size=25, color=TEAL),
+            Text("perubahan kecil pada waktu", font_size=21, color=GREY),
+        ).arrange(DOWN, buff=0.10).move_to(RIGHT*2.7+DOWN*0.55)
+        self.play(FadeIn(deriv_note), run_time=1.2)
+        self.wait(2.2)
+        self.play(FadeOut(deriv_note), run_time=0.8)
+        self.play(Write(eq4), run_time=1.6)
+        self.wait(2.4)
+        self.wipe()
 
-        for eq in ode2:
-            self.play(Write(eq), run_time=1.7)
-            self.wait(1.1)
+        # ==========================================================
+        # 2. SEPARATE VARIABLES
+        # ==========================================================
+        title = self.title("2. Pisahkan v dan t", PURPLE)
+        self.play(Write(title), run_time=1.3)
 
-        tau = Text("τ = waktu sejak gaya dorong dilepas", font_size=21, color=MUTED)
-        tau.move_to(right.get_bottom()+UP*0.55)
-        self.play(FadeIn(tau), run_time=1.1)
+        start = MathTex(r"F-Cv=m\frac{dv}{dt}", color=WHITE).scale(1.15).move_to(UP*1.55)
+        self.color_math(start)
+        self.play(Write(start), run_time=1.5)
+        self.wait(1.2)
+
+        step1 = MathTex(r"\frac{1}{F-Cv}\left(F-Cv\right)
+                       =\frac{1}{F-Cv}m\frac{dv}{dt}", color=WHITE).scale(0.82).move_to(UP*0.45)
+        self.color_math(step1)
+        self.play(Write(step1), run_time=1.8)
+        self.wait(1.3)
+
+        step2 = MathTex(r"1=\frac{m}{F-Cv}\frac{dv}{dt}", color=WHITE).scale(0.95).move_to(DOWN*0.55)
+        self.color_math(step2)
+        self.play(TransformMatchingTex(step1.copy(), step2), run_time=1.5)
+        self.wait(1.2)
+
+        sep = MathTex(r"\frac{dv}{F-Cv}=\frac{dt}{m}", color=WHITE).scale(1.15).move_to(DOWN*1.65)
+        self.color_math(sep)
+        self.play(Write(sep), run_time=1.7)
+
+        braces = VGroup(
+            Brace(sep[0][:5], DOWN, color=BLUE),
+            Brace(sep[0][6:], DOWN, color=TEAL)
+        )
+        labels = VGroup(
+            Text("ruas v", font_size=21, color=BLUE),
+            Text("ruas t", font_size=21, color=TEAL),
+        )
+        labels[0].next_to(braces[0], DOWN, buff=0.1)
+        labels[1].next_to(braces[1], DOWN, buff=0.1)
+        self.play(GrowFromCenter(braces[0]), GrowFromCenter(braces[1]), FadeIn(labels), run_time=1.2)
+        self.wait(2.4)
+        self.wipe()
+
+        # ==========================================================
+        # 3. INTEGRATE LEFT SIDE CAREFULLY
+        # ==========================================================
+        title = self.title("3. Integral ruas kiri: jangan lompat langkah", GREEN)
+        self.play(Write(title), run_time=1.4)
+
+        integ_left = MathTex(r"\int_0^v \frac{dv'}{F-Cv'}", color=WHITE).scale(1.25).move_to(UP*2.0)
+        self.color_math(integ_left)
+        self.play(Write(integ_left), run_time=1.7)
+        self.wait(1.2)
+
+        sub1 = MathTex(r"u=F-Cv'", color=PURPLE).scale(1.0).move_to(UP*0.95)
+        sub2 = MathTex(r"du=-C\,dv'", color=PURPLE).scale(1.0).move_to(UP*0.05)
+        sub3 = MathTex(r"dv'=-\frac{du}{C}", color=PURPLE).scale(1.0).move_to(DOWN*0.85)
+        self.color_math(sub1); self.color_math(sub2); self.color_math(sub3)
+        for q in [sub1, sub2, sub3]:
+            self.play(Write(q), run_time=1.4)
+            self.wait(0.9)
+
+        bounds = VGroup(
+            MathTex(r"v'=0\Rightarrow u=F", color=WHITE),
+            MathTex(r"v'=v\Rightarrow u=F-Cv", color=WHITE),
+        ).arrange(RIGHT, buff=1.0).scale(0.78).to_edge(DOWN, buff=0.48)
+        for q in bounds: self.color_math(q)
+        self.play(FadeIn(bounds), run_time=1.1)
+        self.wait(2.1)
+        self.wipe()
+
+        title = self.title("4. Substitusi u mengubah integral menjadi logaritma", GREEN)
+        self.play(Write(title), run_time=1.4)
+
+        chain = [
+            MathTex(r"\int_0^v \frac{dv'}{F-Cv'}", color=WHITE),
+            MathTex(r"=-\frac1C\int_F^{F-Cv}\frac{du}{u}", color=WHITE),
+            MathTex(r"=-\frac1C\left[\ln u\right]_F^{F-Cv}", color=WHITE),
+            MathTex(r"=-\frac1C\left(\ln(F-Cv)-\ln F\right)", color=WHITE),
+            MathTex(r"=\frac1C\ln\left(\frac{F}{F-Cv}\right)", color=WHITE),
+        ]
+        positions=[1.8,0.9,0.0,-0.9,-1.8]
+        for q,y in zip(chain,positions):
+            self.color_math(q)
+            q.scale(0.86).move_to(UP*y)
+            self.play(Write(q), run_time=1.55)
+            self.wait(0.9)
+        self.wait(2.0)
+        self.wipe()
+
+        # ==========================================================
+        # 5. RIGHT INTEGRAL + EQUATE
+        # ==========================================================
+        title=self.title("5. Integral ruas kanan lebih sederhana", TEAL)
+        self.play(Write(title), run_time=1.3)
+
+        r1=MathTex(r"\int_0^t\frac{dt'}{m}", color=WHITE).scale(1.25).move_to(UP*1.35)
+        r2=MathTex(r"=\frac1m\left[t'\right]_0^t", color=WHITE).scale(1.05).move_to(UP*0.15)
+        r3=MathTex(r"=\frac{t}{m}", color=TEAL).scale(1.25).move_to(DOWN*1.05)
+        self.color_math(r1); self.color_math(r2); self.color_math(r3)
+        for q in [r1,r2,r3]:
+            self.play(Write(q), run_time=1.5)
+            self.wait(1.0)
+        self.wait(1.7)
+        self.wipe()
+
+        title=self.title("6. Kedua hasil integral harus sama", WHITE)
+        self.play(Write(title), run_time=1.3)
+
+        both=MathTex(
+            r"\frac1C\ln\left(\frac{F}{F-Cv}\right)=\frac{t}{m}",
+            color=WHITE
+        ).scale(1.15).move_to(UP*1.1)
+        self.color_math(both)
+        self.play(Write(both), run_time=1.7)
+        self.wait(1.4)
+
+        multiply_c=MathTex(
+            r"\ln\left(\frac{F}{F-Cv}\right)=\frac{Ct}{m}",
+            color=WHITE
+        ).scale(1.15).move_to(DOWN*0.45)
+        self.color_math(multiply_c)
+
+        c_left=MathTex("C", color=RED).scale(1.05).move_to(LEFT*4.2+UP*0.2)
+        c_right=MathTex("C", color=RED).scale(1.05).move_to(RIGHT*4.2+UP*0.2)
+        same=Text("kalikan kedua ruas dengan C", font_size=22, color=GREY).to_edge(DOWN, buff=0.45)
+        self.play(FadeIn(same), FadeIn(c_left), FadeIn(c_right), run_time=1.0)
+        self.play(c_left.animate.move_to(both.get_left()+LEFT*0.45),
+                  c_right.animate.move_to(both.get_right()+RIGHT*0.45),
+                  run_time=1.4)
+        self.play(TransformMatchingTex(both.copy(), multiply_c),
+                  FadeOut(c_left), FadeOut(c_right), FadeOut(same), run_time=1.7)
+        self.wait(2.2)
+        self.wipe()
+
+        # ==========================================================
+        # 7. THE EULER / EXPONENTIAL STEP IN FULL DETAIL
+        # ==========================================================
+        title=self.title("7. Langkah Euler: terapkan e^(·) pada KEDUA ruas", GREEN)
+        self.play(Write(title), run_time=1.4)
+
+        base=MathTex(
+            r"\ln\left(\frac{F}{F-Cv}\right)=\frac{Ct}{m}",
+            color=WHITE
+        ).scale(1.08).move_to(UP*1.85)
+        self.color_math(base)
+        self.play(Write(base), run_time=1.6)
+        self.wait(1.3)
+
+        warning=Text(
+            "Ini bukan 'mengalikan dengan e'. Kita menerapkan fungsi eksponensial.",
+            font_size=23, color=GREY
+        ).move_to(UP*0.85)
+        self.play(FadeIn(warning), run_time=1.2)
+        self.wait(2.0)
+
+        opL=MathTex(r"e^{(\,\cdot\,)}", color=GREEN).scale(1.05).move_to(LEFT*2.5+DOWN*0.05)
+        opR=MathTex(r"e^{(\,\cdot\,)}", color=GREEN).scale(1.05).move_to(RIGHT*2.5+DOWN*0.05)
+        arrows=VGroup(
+            Arrow(opL.get_top(), base.get_left()+RIGHT*1.35+DOWN*0.22, color=GREEN, buff=0.08),
+            Arrow(opR.get_top(), base.get_right()+LEFT*1.15+DOWN*0.22, color=GREEN, buff=0.08),
+        )
+        self.play(FadeIn(opL), FadeIn(opR), GrowArrow(arrows[0]), GrowArrow(arrows[1]), run_time=1.4)
+        self.wait(1.6)
+
+        exp_both=MathTex(
+            r"e^{\,\ln\left(\frac{F}{F-Cv}\right)}"
+            r"="
+            r"e^{\,Ct/m}",
+            color=WHITE
+        ).scale(1.05).move_to(DOWN*1.0)
+        self.color_math(exp_both)
+        self.play(Write(exp_both), run_time=2.0)
+        self.wait(2.0)
+
+        inverse_rule=MathTex(r"e^{\ln z}=z\qquad(z>0)", color=GREEN).scale(0.88).to_edge(DOWN,buff=0.38)
+        self.play(Write(inverse_rule), run_time=1.5)
         self.wait(2.3)
-        self.clear_scene()
+        self.wipe()
 
-        # ============================================================
-        # PHASE 2: INTEGRAL WITH BOUNDS
-        # ============================================================
-        title = self.section_title("Fase 2 — integralkan dari v_max ke v", GREEN)
-        self.play(Write(title), run_time=1.5)
+        # ==========================================================
+        # 8. VISUALIZE exp and log AS INVERSES
+        # ==========================================================
+        title=self.title("8. Mengapa e^(ln z) kembali menjadi z?", GREEN)
+        self.play(Write(title), run_time=1.4)
 
-        panel = self.panel(11.8, 5.35, DOWN*0.25, GREEN)
-        self.play(Create(panel), run_time=1.0)
+        z=MathTex("z", color=BLUE).scale(1.35).move_to(LEFT*4.5)
+        lnz=MathTex(r"\ln z", color=PURPLE).scale(1.35).move_to(ORIGIN)
+        back=MathTex("z", color=BLUE).scale(1.35).move_to(RIGHT*4.5)
 
-        phase2_steps = VGroup(
-            MathTex(
-                r"\int_{v_{\max}}^{v}\frac{dv'}{v'}"
-                r"="
-                r"-\frac{C}{m}\int_{0}^{\tau}d\tau'",
-                color=WHITE
-            ),
-            MathTex(
-                r"\left[\ln v'\right]_{v_{\max}}^{v}"
-                r"="
-                r"-\frac{C}{m}\tau",
-                color=GREEN
-            ),
-            MathTex(
-                r"\ln v-\ln v_{\max}=-\frac{C\tau}{m}",
-                color=PURPLE
-            ),
-            MathTex(
-                r"\ln\left(\frac{v}{v_{\max}}\right)=-\frac{C\tau}{m}",
-                color=PURPLE
-            ),
-            MathTex(
-                r"\boxed{v(\tau)=v_{\max}e^{-C\tau/m}}",
-                color=BLUE
-            ),
-        ).arrange(DOWN, aligned_edge=LEFT, buff=0.28).scale(0.75)
-        phase2_steps.move_to(DOWN*0.12)
+        arr1=Arrow(z.get_right(), lnz.get_left(), color=PURPLE, buff=0.25)
+        arr2=Arrow(lnz.get_right(), back.get_left(), color=GREEN, buff=0.25)
+        lab1=MathTex(r"\ln(\cdot)", color=PURPLE).scale(0.78).next_to(arr1, UP, buff=0.15)
+        lab2=MathTex(r"e^{(\cdot)}", color=GREEN).scale(0.78).next_to(arr2, UP, buff=0.15)
 
-        for eq in phase2_steps:
-            self.play(Write(eq), run_time=1.8)
-            self.wait(1.2)
-        self.wait(2.3)
-        self.clear_scene()
+        self.play(Write(z), run_time=0.8)
+        self.play(GrowArrow(arr1), Write(lab1), run_time=1.2)
+        self.play(Write(lnz), run_time=1.0)
+        self.wait(1.1)
+        self.play(GrowArrow(arr2), Write(lab2), run_time=1.2)
+        self.play(Write(back), run_time=1.0)
+        self.wait(1.5)
 
-        # ============================================================
-        # HALF SPEED
-        # ============================================================
-        title = self.section_title("Fase 2 — kapan kecepatannya menjadi setengah?", YELLOW)
-        self.play(Write(title), run_time=1.5)
-
-        panel = self.panel(10.8, 5.0, DOWN*0.2, YELLOW)
-        self.play(Create(panel), run_time=1.0)
-
-        half_steps = VGroup(
-            MathTex(
-                r"\frac12v_{\max}=v_{\max}e^{-Ct_2/m}",
-                color=WHITE
-            ),
-            MathTex(
-                r"\frac12=e^{-Ct_2/m}",
-                color=PURPLE
-            ),
-            MathTex(
-                r"\ln\left(\frac12\right)=-\frac{Ct_2}{m}",
-                color=PURPLE
-            ),
-            MathTex(
-                r"t_2=\frac{m}{C}\ln2",
-                color=GREEN
-            ),
-            MathTex(
-                r"t_2=\frac{2.5}{2}\ln2\approx0.866\ \mathrm{s}",
-                color=YELLOW
-            ),
-        ).arrange(DOWN, aligned_edge=LEFT, buff=0.27).scale(0.78)
-        half_steps.move_to(DOWN*0.1)
-
-        for eq in half_steps:
-            self.play(Write(eq), run_time=1.7)
-            self.wait(1.15)
+        inverse=Text("log natural dan eksponensial saling membatalkan", font_size=24, color=GREY)
+        inverse.to_edge(DOWN, buff=0.55)
+        self.play(FadeIn(inverse), run_time=1.1)
         self.wait(2.5)
-        self.clear_scene()
+        self.wipe()
 
-        # ============================================================
-        # FINAL GRAPH: BOTH PHASES
-        # ============================================================
-        title = self.section_title("Gabungkan kedua fase", WHITE)
-        self.play(Write(title), run_time=1.5)
+        # ==========================================================
+        # 9. AFTER EXPONENTIATING: EACH ALGEBRA STEP
+        # ==========================================================
+        title=self.title("9. Setelah eksponensial diterapkan", GREEN)
+        self.play(Write(title), run_time=1.3)
 
-        axes = Axes(
-            x_range=[0, 6.6, 1],
-            y_range=[0, 5.5, 1],
-            x_length=8.7,
-            y_length=4.7,
-            tips=False,
-            axis_config={"include_numbers": True, "font_size": 21, "color": WHITE},
-        ).move_to(LEFT*1.8 + DOWN*0.35)
+        e1=MathTex(
+            r"e^{\,\ln\left(\frac{F}{F-Cv}\right)}=e^{Ct/m}",
+            color=WHITE
+        ).scale(0.96).move_to(UP*2.0)
+        e2=MathTex(
+            r"\frac{F}{F-Cv}=e^{Ct/m}",
+            color=WHITE
+        ).scale(1.05).move_to(UP*1.15)
+        self.color_math(e1); self.color_math(e2)
+        self.play(Write(e1), run_time=1.5)
+        self.play(TransformMatchingTex(e1.copy(),e2), run_time=1.6)
+        self.wait(1.2)
 
-        phase1 = axes.plot(
-            lambda t: vinf*(1-np.exp(-k*t)),
-            x_range=[0,t1],
-            color=BLUE, stroke_width=5
-        )
-        phase2 = axes.plot(
-            lambda t: vmax*np.exp(-k*(t-t1)),
-            x_range=[t1,total],
-            color=PURPLE, stroke_width=5
-        )
-
-        switch_line = DashedLine(axes.c2p(t1,0), axes.c2p(t1,vmax), color=YELLOW)
-        half_line = DashedLine(axes.c2p(total,0), axes.c2p(total,vmax/2), color=GREEN)
-
-        self.play(Create(axes), run_time=1.5)
-        self.play(Create(phase1), run_time=2.0)
-        self.play(Create(switch_line), run_time=1.0)
+        multiply_factor=MathTex(r"\times(F-Cv)", color=RED).scale(0.82).move_to(LEFT*4.5+UP*0.15)
+        multiply_factor2=multiply_factor.copy().move_to(RIGHT*4.5+UP*0.15)
+        msg=Text("kalikan kedua ruas dengan faktor yang sama", font_size=21, color=GREY).move_to(UP*0.25)
+        self.play(FadeIn(msg),FadeIn(multiply_factor),FadeIn(multiply_factor2),run_time=1.0)
         self.wait(1.0)
-        self.play(Create(phase2), run_time=1.7)
-        self.play(Create(half_line), run_time=1.0)
 
-        side = self.panel(4.1, 4.7, RIGHT*5.0 + DOWN*0.25, WHITE)
-        self.play(Create(side), run_time=1.0)
+        e3=MathTex(
+            r"F=(F-Cv)e^{Ct/m}",
+            color=WHITE
+        ).scale(1.05).move_to(DOWN*0.65)
+        self.color_math(e3)
+        self.play(Write(e3),FadeOut(msg),FadeOut(multiply_factor),FadeOut(multiply_factor2),run_time=1.6)
+        self.wait(1.4)
 
-        summary = VGroup(
-            Text("Durasi", font_size=25, color=WHITE, weight=BOLD),
-            MathTex(r"t_1\approx5.02\ \mathrm{s}", color=BLUE),
-            MathTex(r"t_2\approx0.866\ \mathrm{s}", color=PURPLE),
-            Line(LEFT*1.15, RIGHT*1.15, color=MUTED, stroke_width=1),
-            MathTex(r"T=t_1+t_2", color=WHITE),
-            MathTex(r"\boxed{T\approx5.89\ \mathrm{s}}", color=GREEN),
-        ).arrange(DOWN, buff=0.32).scale(0.82)
-        summary.move_to(side)
+        expminus=MathTex(r"\times e^{-Ct/m}", color=GREEN).scale(0.8).move_to(LEFT*4.3+DOWN*1.55)
+        expminus2=expminus.copy().move_to(RIGHT*4.3+DOWN*1.55)
+        msg2=Text("sekarang kalikan kedua ruas dengan e^(-Ct/m)",font_size=21,color=GREY).to_edge(DOWN,buff=0.38)
+        self.play(FadeIn(msg2),FadeIn(expminus),FadeIn(expminus2),run_time=1.0)
+        self.wait(1.2)
 
-        for item in summary:
-            if isinstance(item, Line):
-                self.play(Create(item), run_time=0.7)
-            else:
-                self.play(Write(item), run_time=1.2)
-            self.wait(0.55)
+        e4=MathTex(
+            r"Fe^{-Ct/m}=F-Cv",
+            color=WHITE
+        ).scale(1.05).move_to(DOWN*1.65)
+        self.color_math(e4)
+        self.play(Write(e4),FadeOut(msg2),FadeOut(expminus),FadeOut(expminus2),run_time=1.6)
+        self.wait(2.0)
+        self.wipe()
+
+        title=self.title("10. Isolasi v", BLUE)
+        self.play(Write(title), run_time=1.2)
+
+        iso=[
+            MathTex(r"Fe^{-Ct/m}=F-Cv",color=WHITE),
+            MathTex(r"Cv=F-Fe^{-Ct/m}",color=WHITE),
+            MathTex(r"Cv=F\left(1-e^{-Ct/m}\right)",color=WHITE),
+            MathTex(r"\boxed{v(t)=\frac FC\left(1-e^{-Ct/m}\right)}",color=WHITE),
+        ]
+        ys=[1.65,0.55,-0.55,-1.65]
+        for q,y in zip(iso,ys):
+            self.color_math(q)
+            q.scale(0.98 if y>-1 else 1.05).move_to(UP*y)
+            self.play(Write(q),run_time=1.6)
+            self.wait(1.0)
+        self.wait(2.4)
+        self.wipe()
+
+        # ==========================================================
+        # 11. PHYSICAL MEANING OF THE EXPONENTIAL SOLUTION
+        # ==========================================================
+        title=self.title("11. Apa arti bentuk eksponensial ini secara fisik?", BLUE)
+        self.play(Write(title),run_time=1.3)
+
+        axes=Axes(
+            x_range=[0,6,1],y_range=[0,5.5,1],
+            x_length=8.0,y_length=4.8,tips=False,
+            axis_config={"include_numbers":True,"font_size":21,"color":WHITE}
+        ).shift(LEFT*1.8+DOWN*0.35)
+        curve=axes.plot(lambda t:vinf*(1-np.exp(-k*t)),x_range=[0,5.7],color=BLUE,stroke_width=5)
+        terminal=DashedLine(axes.c2p(0,vinf),axes.c2p(5.7,vinf),color=GREEN,stroke_width=3)
+        self.play(Create(axes),Create(curve),run_time=2.0)
+        self.play(Create(terminal),run_time=1.0)
+
+        terminal_label=MathTex(r"\frac FC=5.00\,\mathrm{m/s}",color=GREEN).scale(0.78)
+        terminal_label.next_to(terminal,UP,buff=0.12).shift(RIGHT*1.9)
+        self.play(Write(terminal_label),run_time=1.2)
+
+        formula=MathTex(r"v(t)=\frac FC\left(1-e^{-Ct/m}\right)",color=WHITE).scale(0.86)
+        self.color_math(formula)
+        formula.move_to(RIGHT*4.5+UP*1.35)
+        self.play(Write(formula),run_time=1.5)
+
+        decay=MathTex(r"e^{-Ct/m}\longrightarrow0",color=GREEN).scale(0.86).next_to(formula,DOWN,buff=0.55)
+        limit=MathTex(r"v(t)\longrightarrow\frac FC",color=BLUE).scale(0.9).next_to(decay,DOWN,buff=0.38)
+        self.play(Write(decay),run_time=1.4)
+        self.wait(1.1)
+        self.play(Write(limit),run_time=1.4)
+        self.wait(2.3)
+        self.wipe()
+
+        # ==========================================================
+        # 12. t1
+        # ==========================================================
+        title=self.title("12. Waktu sampai v_max = 4.91 m/s", YELLOW)
+        self.play(Write(title),run_time=1.3)
+        t1eqs=[
+            MathTex(r"4.91=5\left(1-e^{-0.8t_1}\right)",color=WHITE),
+            MathTex(r"0.982=1-e^{-0.8t_1}",color=WHITE),
+            MathTex(r"e^{-0.8t_1}=0.018",color=GREEN),
+            MathTex(r"-0.8t_1=\ln(0.018)",color=PURPLE),
+            MathTex(r"t_1=-\frac{\ln(0.018)}{0.8}",color=WHITE),
+            MathTex(r"\boxed{t_1\approx5.02\,\mathrm s}",color=YELLOW),
+        ]
+        ypos=[2.0,1.2,0.4,-0.4,-1.2,-2.0]
+        for q,y in zip(t1eqs,ypos):
+            self.color_math(q)
+            q.scale(0.82).move_to(UP*y)
+            self.play(Write(q),run_time=1.5)
+            self.wait(0.9)
+        self.wait(2.0)
+        self.wipe()
+
+        # ==========================================================
+        # 13. PHASE 2
+        # ==========================================================
+        title=self.title("13. Fase 2: gaya dorong hilang", RED)
+        self.play(Write(title),run_time=1.3)
+
+        eqp2=MathTex(r"-Cv=m\frac{dv}{d\tau}",color=WHITE).scale(1.1).move_to(UP*1.55)
+        sep2=MathTex(r"\frac{dv}{v}=-\frac Cm\,d\tau",color=WHITE).scale(1.05).move_to(UP*0.45)
+        int2=MathTex(
+            r"\int_{v_{\max}}^v\frac{dv'}{v'}"
+            r"=-\frac Cm\int_0^\tau d\tau'",
+            color=WHITE
+        ).scale(0.92).move_to(DOWN*0.65)
+        result2=MathTex(
+            r"\ln\left(\frac{v}{v_{\max}}\right)=-\frac{C\tau}{m}",
+            color=WHITE
+        ).scale(0.98).move_to(DOWN*1.75)
+        for q in [eqp2,sep2,int2,result2]: self.color_math(q)
+        for q in [eqp2,sep2,int2,result2]:
+            self.play(Write(q),run_time=1.6)
+            self.wait(1.0)
+        self.wait(1.8)
+        self.wipe()
+
+        # ==========================================================
+        # 14. EULER STEP PHASE 2 TOO
+        # ==========================================================
+        title=self.title("14. Lagi: terapkan e^(·) pada kedua ruas", GREEN)
+        self.play(Write(title),run_time=1.3)
+
+        p2a=MathTex(
+            r"\ln\left(\frac{v}{v_{\max}}\right)=-\frac{C\tau}{m}",
+            color=WHITE
+        ).scale(1.05).move_to(UP*1.45)
+        self.color_math(p2a)
+        self.play(Write(p2a),run_time=1.4)
+
+        ops=VGroup(
+            MathTex(r"e^{(\cdot)}",color=GREEN).scale(0.9).move_to(LEFT*2.6+UP*0.3),
+            MathTex(r"e^{(\cdot)}",color=GREEN).scale(0.9).move_to(RIGHT*2.6+UP*0.3),
+        )
+        self.play(FadeIn(ops),run_time=1.0)
+        self.wait(1.0)
+
+        p2b=MathTex(
+            r"e^{\,\ln(v/v_{\max})}=e^{-C\tau/m}",
+            color=WHITE
+        ).scale(1.0).move_to(DOWN*0.05)
+        self.color_math(p2b)
+        self.play(Write(p2b),run_time=1.7)
+        self.wait(1.3)
+
+        p2c=MathTex(
+            r"\frac{v}{v_{\max}}=e^{-C\tau/m}",
+            color=WHITE
+        ).scale(1.05).move_to(DOWN*1.15)
+        self.color_math(p2c)
+        self.play(TransformMatchingTex(p2b.copy(),p2c),run_time=1.5)
+        self.wait(1.2)
+
+        p2d=MathTex(
+            r"\boxed{v(\tau)=v_{\max}e^{-C\tau/m}}",
+            color=WHITE
+        ).scale(1.05).move_to(DOWN*2.0)
+        self.color_math(p2d)
+        self.play(Write(p2d),run_time=1.5)
+        self.wait(2.2)
+        self.wipe()
+
+        # ==========================================================
+        # 15. HALF-SPEED TIME
+        # ==========================================================
+        title=self.title("15. Turun sampai setengah v_max", PURPLE)
+        self.play(Write(title),run_time=1.3)
+
+        half=[
+            MathTex(r"\frac12v_{\max}=v_{\max}e^{-Ct_2/m}",color=WHITE),
+            MathTex(r"\frac12=e^{-Ct_2/m}",color=WHITE),
+            MathTex(r"\ln\left(\frac12\right)=-\frac{Ct_2}{m}",color=WHITE),
+            MathTex(r"-\ln2=-\frac{Ct_2}{m}",color=WHITE),
+            MathTex(r"t_2=\frac mC\ln2",color=WHITE),
+            MathTex(r"\boxed{t_2\approx0.866\,\mathrm s}",color=PURPLE),
+        ]
+        ypos=[2.0,1.2,0.4,-0.4,-1.2,-2.0]
+        for q,y in zip(half,ypos):
+            self.color_math(q)
+            q.scale(0.82).move_to(UP*y)
+            self.play(Write(q),run_time=1.45)
+            self.wait(0.9)
+        self.wait(2.0)
+        self.wipe()
+
+        # ==========================================================
+        # 16. FULL MOTION
+        # ==========================================================
+        title=self.title("16. Seluruh gerak dalam satu gambar", WHITE)
+        self.play(Write(title),run_time=1.3)
+
+        axes=Axes(
+            x_range=[0,6.6,1],y_range=[0,5.5,1],
+            x_length=9.1,y_length=4.8,tips=False,
+            axis_config={"include_numbers":True,"font_size":21,"color":WHITE}
+        ).shift(LEFT*1.55+DOWN*0.4)
+
+        ph1=axes.plot(lambda t:vinf*(1-np.exp(-k*t)),x_range=[0,t1],color=BLUE,stroke_width=5)
+        ph2=axes.plot(lambda t:vmax*np.exp(-k*(t-t1)),x_range=[t1,total],color=PURPLE,stroke_width=5)
+        switch=DashedLine(axes.c2p(t1,0),axes.c2p(t1,vmax),color=YELLOW,stroke_width=3)
+        end=DashedLine(axes.c2p(total,0),axes.c2p(total,vmax/2),color=GREEN,stroke_width=3)
+
+        self.play(Create(axes),run_time=1.4)
+        self.play(Create(ph1),run_time=2.0)
+        self.play(Create(switch),run_time=1.0)
+        self.wait(1.0)
+        self.play(Create(ph2),run_time=1.8)
+        self.play(Create(end),run_time=1.0)
+
+        labels=VGroup(
+            MathTex(r"t_1\approx5.02\,s",color=YELLOW),
+            MathTex(r"t_2\approx0.866\,s",color=PURPLE),
+            MathTex(r"T=t_1+t_2\approx5.89\,s",color=GREEN),
+        ).arrange(DOWN,aligned_edge=LEFT,buff=0.42).scale(0.78)
+        labels.move_to(RIGHT*5.0+DOWN*0.25)
+        for q in labels:
+            self.play(Write(q),run_time=1.3)
+            self.wait(0.7)
 
         self.wait(3.0)
