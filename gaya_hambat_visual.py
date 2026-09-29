@@ -1,5 +1,6 @@
 from manim import *
 import numpy as np
+import re
 
 # Visual language inspired by the educational principles of 3Blue1Brown:
 # dark field, semantic colors, minimal chrome, transformations instead of slides.
@@ -19,18 +20,28 @@ config.background_color = BG
 
 class LinearDragDeepDive(Scene):
     def M(self, *tex_strings, color=WHITE, **kwargs):
-        mob = MathTex(
-            *tex_strings,
-            color=color,
-            substrings_to_isolate=["F", "C", "v", r"\ln", r"\tau"],
-            **kwargs,
-        )
-        mob.set_color_by_tex("F", YELLOW)
-        mob.set_color_by_tex("C", RED)
-        mob.set_color_by_tex("v", BLUE)
-        mob.set_color_by_tex(r"\ln", PURPLE)
-        mob.set_color_by_tex(r"\tau", TEAL)
-        return mob
+        # Inject LaTeX colors directly. This preserves fractions/derivatives while
+        # keeping the same symbol the same color across every scene.
+        palette = {
+            r"\\ln": "9A72AC",
+            r"\\tau": "5CD0B3",
+            "F": "FFFF00",
+            "C": "FC6255",
+            "v": "58C4DD",
+        }
+        pattern = re.compile(r"(\\\\ln|\\\\tau|F|C|v)")
+
+        def tint(source):
+            return pattern.sub(
+                lambda match: r"{\\color[HTML]{"
+                + palette[match.group(0)]
+                + "}"
+                + match.group(0)
+                + "}",
+                source,
+            )
+
+        return MathTex(*(tint(x) for x in tex_strings), color=color, **kwargs)
 
     def color_math(self, mob):
         # Colors are isolated at construction time in M().
